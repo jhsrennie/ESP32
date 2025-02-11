@@ -28,6 +28,12 @@ Code to flash an LED using the Arduino pin functions.
 LedcGen  
 Test the ledc functions for generating a square wave with user selectable frequency and duty cycle.
 
+libraries/RHSSock  
+BSD sockets class.
+
+libraries/RHSWiFi  
+WiFi class.
+
 MQTT  
 Test MQTT using a third party class
 
@@ -45,6 +51,12 @@ Test using BSD sockets for TCP/IP connections.
 
 TestI2C  
 Very simple test of I2C functions.
+
+TestRHSSock  
+Test the CRHSSockets class from libraries/RHSSock
+
+TestRHSWiFi  
+Test the CRHSWiFi class from libraries/RHSWiFi
 
 TwoCore  
 Test running tasks on both cores of the Xtensa CPU.
