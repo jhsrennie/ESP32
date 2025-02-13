@@ -3,9 +3,10 @@
 // ---------
 // Demonstrate how to use the IDF MQTT API from the Arduino interface
 // ---------------------------------------------------------------------
-
 #include <WiFi.h>
 #include <mqtt_client.h>
+
+#define LED_BUILTIN 2
 
 // WiFi credentials
 String SSID = "MySSID";
@@ -67,7 +68,6 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
 // -----------
 // This function is called when the program connects to the MQTT broker
 // ---------------------------------------------------------------------
-
 void onConnected(esp_mqtt_event_handle_t event) {
   // When we connect subscribe to the test topic
   esp_mqtt_client_handle_t client = event->client;
@@ -80,7 +80,6 @@ void onConnected(esp_mqtt_event_handle_t event) {
 // ------------
 // This function is called when the program has subscribed to a topic
 // ---------------------------------------------------------------------
-
 void onSubscribed(esp_mqtt_event_handle_t event) {
   // Publish a message in this topic to say we are here
   esp_mqtt_client_handle_t client = event->client;
@@ -93,11 +92,21 @@ void onSubscribed(esp_mqtt_event_handle_t event) {
 // ------
 // This function is called when data is received in a subscribed topic
 // ---------------------------------------------------------------------
-
 void onData(esp_mqtt_event_handle_t event) {
   esp_mqtt_client_handle_t client = event->client;
-  Serial.printf("Received data in topic %.*s: %.*s\n", event->topic_len, event->topic, event->data_len, event->data);
-}
+
+  // Convert the chars in the arrays event->topic and event->data to strings
+  String topic(event->topic, event->topic_len);
+  String data(event->data, event->data_len);
+  Serial.printf("Received data in topic %s: %s\n", topic.c_str(), data.c_str());
+
+  // The "on" command turns on the built in LED
+  if (data == "on")
+    digitalWrite(LED_BUILTIN, HIGH);
+  // The "off" command turns off the built in LED
+  else if (data == "off")
+    digitalWrite(LED_BUILTIN, LOW);
+}  
 
 // ---------------------------------------------------------------------
 // mqtt_app_start
@@ -136,6 +145,9 @@ void setup() {
   // Connect the WiFi
   Serial.println("Connecting wifi ...");
   ConnectWiFi();
+
+  // We will use the built in LED for testing
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // It appears we don't need an event loop for MQTT
   // I suspect the WiFi client has already created one
