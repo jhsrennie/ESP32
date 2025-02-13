@@ -6,6 +6,8 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
+#define LED_BUILTIN 2
+
 // WiFi credentials
 String SSID = "MySSID";
 String PWD  = "MyPassword";
@@ -15,7 +17,6 @@ WebServer server(80);
 
 // ---------------------------------------------------------------------
 // ConnectWiFi
-// -----------
 // ---------------------------------------------------------------------
 void ConnectWiFi() {
   WiFi.begin(SSID, PWD);
@@ -29,7 +30,7 @@ void ConnectWiFi() {
 
 // ---------------------------------------------------------------------
 // onRoot
-// ------
+// This called when the root directory is requested
 // ---------------------------------------------------------------------
 void onRoot() {
   String response = R"(
@@ -37,6 +38,11 @@ void onRoot() {
       <body>
         <h1>ESP32 web server test</h1>
         <p>John's ESP32 web server test program</p>
+        <p>Turn the on board LED:</p>
+        <ul>
+          <li><a href="/on">On</a></li>
+          <li><a href="/off">Off</a></li>
+        </ul>
       </body>
     </html>
   )";
@@ -44,8 +50,26 @@ void onRoot() {
 }
 
 // ---------------------------------------------------------------------
+// onOn and onOff
+// Turn the on board LED on and off
+// ---------------------------------------------------------------------
+
+void onOn() {
+  // Turn the LED on
+  digitalWrite(LED_BUILTIN, HIGH);
+  // And redirect to the home page
+  onRoot();
+}
+
+void onOff() {
+  // Turn the LED off
+  digitalWrite(LED_BUILTIN, LOW);
+  // And redirect to the home page
+  onRoot();
+}
+
+// ---------------------------------------------------------------------
 // setup
-// -----
 // ---------------------------------------------------------------------
 void setup() {
   // Connect the serial monitor and wait for it to initialise
@@ -54,11 +78,16 @@ void setup() {
     delay(100);
   delay(1000);
 
+  // Set the LED GPIO as output
+  pinMode(LED_BUILTIN, OUTPUT);
+
   // Connect the WiFi
   ConnectWiFi();
 
  // Set the paths we will handle
   server.on("/", onRoot);
+  server.on("/on", onOn);
+  server.on("/off", onOff);
   // Start the HTTP server
   server.begin();
 
@@ -68,7 +97,6 @@ void setup() {
 
 // ---------------------------------------------------------------------
 // loop
-// ----
 // ---------------------------------------------------------------------
 void loop() {
   static int loop_counter = 0;
