@@ -33,19 +33,35 @@ void ConnectWiFi() {
 // This called when the root directory is requested
 // ---------------------------------------------------------------------
 void onRoot() {
+  // Check if the form was submitted
+  String formtext = "";
+  if (server.hasArg("formtext"))
+    formtext = server.arg("formtext");
+
+  // Construct the response
   String response = R"(
     <!DOCTYPE html><html>
       <body>
         <h1>ESP32 web server test</h1>
         <p>John's ESP32 web server test program</p>
-        <p>Turn the on board LED:</p>
+        <h3>Turn the on board LED:</h3>
         <ul>
           <li><a href="/on">On</a></li>
           <li><a href="/off">Off</a></li>
         </ul>
-      </body>
-    </html>
-  )";
+        <h3>Example form</h3>
+        <form action="/" method="GET">
+          <p>Type some text:</p>
+          <input type="text" name="formtext">
+          <input type="submit" value="Click Me">
+        </form>)";
+
+  if (formtext != "")
+    response += "<hr/><p>You typed \"" + formtext + "\"</p>";
+
+  response += "</body></html>";
+
+  // Send the response
   server.send(200, "text/html", response);
 }
 
@@ -74,8 +90,6 @@ void onOff() {
 void setup() {
   // Connect the serial monitor and wait for it to initialise
   Serial.begin(115200);
-  while (!Serial)
-    delay(100);
   delay(1000);
 
   // Set the LED GPIO as output
