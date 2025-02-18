@@ -7,6 +7,9 @@ They were all written on a WROOM but they should run on most ESP32s. Note howeve
 ADC-DMA  
 Code to test continuous A to D input. Also demonstrates use of the cosine generator.
 
+C3-Temp
+Demonstrate use of the C3 on chip temperature sensor
+
 Cosgen  
 experiment with cosine generator.
 
@@ -15,6 +18,9 @@ Very simple sketch using the Arduino functions to do analogue output and input.
 
 DeepSleep  
 Test using the ESP32 deep sleep function
+
+ESP-NOW
+Demonstrate communication between ESP32s using the ESP-NOW protocol.
 
 ESPScope  
 Oscilloscope sketch. Displays output through a web page.
