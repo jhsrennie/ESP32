@@ -52,6 +52,9 @@ Test use of a photoresistor as input
 Server  
 Implements a simple telnet server using Arduino funtions and also using BSD sockets.
 
+SieveBenchmark  
+Speed test sketch
+
 SocketsAPI  
 Test using BSD sockets for TCP/IP connections.
 
