@@ -270,6 +270,7 @@ void timedTest(int secs, SIEVE *primeFinder(int), char *title) {
     float elapsed = (float) currentTicks - startTicks;
 
     Serial.printf("%s;%d;%0.1f;1;algorithm=wheel,faithful=yes,bits=1\n", title, passes, elapsed / CLOCKS_PER_SEC);
+    Serial.printf("No. passes = %d\n", passes);
     fflush(stdout);
 }
 
