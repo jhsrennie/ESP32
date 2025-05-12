@@ -16,8 +16,14 @@ experiment with cosine generator.
 DAC  
 Very simple sketch using the Arduino functions to do analogue output and input.
 
-DeepSleep  
+DeepSleep
 Test using the ESP32 deep sleep function
+
+DeepSleepGPIO
+Test using the ESP32 deep sleep function with wake by a GPIO pin
+
+DeepSleepGPIOC3
+Test using the ESP32 deep sleep function with wake by a GPIO pin - C3 version
 
 ESP-NOW  
 Demonstrate communication between ESP32s using the ESP-NOW protocol.
