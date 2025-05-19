@@ -9,8 +9,8 @@
 #include <time.h>
 
 // WiFi credentials
-#define SSID "RatHaus"
-#define PWD  "rattusrattus"
+#define SSID "MySSID"
+#define PWD  "MyPwd"
 
 // NTP server details
 #define NTPSERVER "pool.ntp.org"
