@@ -16,13 +16,13 @@ experiment with cosine generator.
 DAC  
 Very simple sketch using the Arduino functions to do analogue output and input.
 
-DeepSleep  
+DeepSleep
 Test using the ESP32 deep sleep function
 
-DeepSleepGPIO  
+DeepSleepGPIO
 Test using the ESP32 deep sleep function with wake by a GPIO pin
 
-DeepSleepGPIOC3  
+DeepSleepGPIOC3
 Test using the ESP32 deep sleep function with wake by a GPIO pin - C3 version
 
 ESP-NOW  
@@ -51,6 +51,9 @@ Test MQTT using a third party class
 
 MQTT_IDF  
 Test MQTT using the IDF funtions
+
+NTPClient
+This demonstrates how to set the time using the ESP-IDF SNTP functions
 
 Photoresistor  
 Test use of a photoresistor as input
