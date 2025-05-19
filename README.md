@@ -52,8 +52,11 @@ Test MQTT using a third party class
 MQTT_IDF  
 Test MQTT using the IDF funtions
 
-NTPClient
+NTPClient  
 This demonstrates how to set the time using the ESP-IDF SNTP functions
+
+NTPServer  
+This extends the NTPClient sketch to add an NTP server as well
 
 Photoresistor  
 Test use of a photoresistor as input

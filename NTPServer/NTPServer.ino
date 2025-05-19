@@ -1,8 +1,6 @@
 // ---------------------------------------------------------------------
-// NTPClient
+// NTPServer
 // ---------
-// Demonstrate how to get the time from an NTP server
-// This uses only the ESP-IDF SNTP and POSIX time functions
 // ---------------------------------------------------------------------
 #include <WiFi.h>
 #include <esp_netif_sntp.h>
@@ -14,6 +12,9 @@
 
 // NTP server details
 #define NTPSERVER "pool.ntp.org"
+
+// Prototype from ntp.cpp
+void handleNTPRequest();
 
 // ---------------------------------------------------------------------
 // ConnectWiFi
@@ -57,9 +58,9 @@ void setup()
 {
   // Initialise the serial port
   Serial.begin(115200);
-  
+
   // Connect to WiFi
-  ConnectWiFi();  
+  ConnectWiFi();
 
   // Initialise the SNTP client
   if (!InitSNTP()) {
@@ -84,5 +85,10 @@ void loop()
   strftime(buf, LEN_BUF, "%a, %d %b %Y %T %z", tm_now);
   Serial.println(buf);
 
-  delay(10000);
+  // Now we loop waiting for ntp connections
+  Serial.println("Waiting for request ...");
+  while (true) {
+    handleNTPRequest();
+    delay(100);
+  }
 }
