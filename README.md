@@ -46,6 +46,9 @@ BSD sockets class.
 libraries/RHSWiFi  
 WiFi class.
 
+libraries/SoftAP  
+Code to implement a WiFi access point.
+
 MQTT  
 Test MQTT using a third party class
 
@@ -90,3 +93,6 @@ Test using continuous D to A conversion. Generates waveforms with various shapes
 
 WebServer  
 Test code to demonstrate how to write a simple HTTP server using the WebServer class.
+
+WebSock  
+Test code to demonstrate how to use web sockets.
