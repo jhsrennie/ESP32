@@ -1,0 +1,203 @@
+// ---------------------------------------------------------------------
+// Server using multiple tasks
+// ---------------------------------------------------------------------
+
+#include <lwip/sockets.h>
+#include "WiFi.h"
+
+// WiFi credentials
+String SSID = "MySSID";
+String PWD  = "MyPassword";
+
+// Global variable to control the flash rate
+int FlashDelay = 10000;
+uint8_t FlashPin = 2;
+
+// Task handles
+TaskHandle_t hFlashTask, hCommsTask;
+// Experiment suggests 2000 is adequate
+#define STACKSIZE 2000
+
+// ---------------------------------------------------------------------
+// ConnectWiFi
+// ---------------------------------------------------------------------
+void ConnectWiFi() {
+  WiFi.begin(SSID, PWD, 6);
+  int loopcnt = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.printf("Connecting: time %d, WiFi status = %d, signal = %d\n", loopcnt++, WiFi.status(), WiFi.RSSI());
+    delay(1000);
+  }
+  Serial.printf("Connected: %s\n", WiFi.localIP().toString().c_str());
+}
+
+// ---------------------------------------------------------------------
+// Flash task
+// ---------------------------------------------------------------------
+void FlashTask(void* LEDPin) {
+  uint8_t pin = *((uint8_t*) LEDPin);
+
+  timeval tv_start;
+  gettimeofday(&tv_start, 0);
+
+  Serial.printf("Starting FlashTask(%d) on core %d\n", pin, xPortGetCoreID());
+  while (true) {
+    // We won't use a semaphore for now
+    int flash_delay = FlashDelay;
+
+    // Flash the LED
+    // #include <sys/time.h>
+    timeval tv;
+    gettimeofday(&tv, 0);
+    int elapsed = tv.tv_sec - tv_start.tv_sec;
+    Serial.printf("%d: FLASH %d on pin %d\n", elapsed, flash_delay, pin);
+    delay(flash_delay);
+  }
+}
+
+// ---------------------------------------------------------------------
+// Function to read a string from the network client
+// Strings are terminated by \n
+// ---------------------------------------------------------------------
+String recv_str(int Client) {
+  String cmd = "";
+  while (true) {
+    // Read one character
+    char c;
+    int num_read = recv(Client, &c, 1, 0);
+    // If the read failed give up
+    if (num_read != 1) {
+      Serial.printf("recv failed: %d\r\n", num_read);
+      break;
+    }
+
+    // Ignore carriage returns
+    if (c == '\r') {
+      continue;
+    }
+
+    // Line feed ends a command
+    else if (c == '\n') {
+      return cmd;
+    }
+
+    // Else append the character to the command
+    else {
+      cmd += c;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+// Function to write a string to the network client
+// ---------------------------------------------------------------------
+int send_str(int Client, String s) {
+  int num_written = send(Client, s.c_str(), s.length(), 0);
+    if (num_written < 0)
+      Serial.printf("send failed: %d\r\n", num_written);
+  return num_written;
+}
+
+// ---------------------------------------------------------------------
+// Comms task
+// ---------------------------------------------------------------------
+void CommsTask(void* Unused) {
+  Serial.printf("Starting CommsTask() on core %d\n", xPortGetCoreID());
+
+  // Create, bind and listen on port 23
+  int sock_srv = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  
+  struct sockaddr addr_in;
+  memset(&addr_in, 0, sizeof(addr_in));
+
+  struct sockaddr_in* p_addr_in = (struct sockaddr_in*) &addr_in;
+  p_addr_in->sin_family = PF_INET;
+  p_addr_in->sin_port = htons(23);
+  p_addr_in->sin_addr.s_addr = INADDR_ANY;
+  bind(sock_srv, &addr_in, sizeof(addr_in));
+
+  listen(sock_srv, 1);
+ 
+  // Loop to handle connections
+  while (true) {
+    // Wait for a connection
+    sockaddr addr_client;
+    memset(&addr_client, 0, sizeof(addr_client));
+    int sock_client = accept(sock_srv, &addr_client, NULL);
+    Serial.println("Accepted connection");
+
+    send_str(sock_client, "Welcome!\r\n");
+    send_str(sock_client, "Enter exit to leave\r\n");
+
+    // Read commands from the client
+    while (true) {
+      String cmd = recv_str(sock_client);
+
+      // Exit
+      if (cmd == "exit") {
+        send_str(sock_client, "Bye!\r\n");
+        closesocket(sock_client);
+        break;
+      }
+
+      // Suspend/resume the flashing
+      else if (cmd == "off") {
+        Serial.println("Suspending flash task\r\n");
+        vTaskSuspend(hFlashTask);
+      }
+      else if (cmd == "on") {
+        Serial.println("Resuming flash task\r\n");
+        vTaskResume(hFlashTask);
+      }
+
+      // If the command is a number use it to set the delay
+      else if (int i = cmd.toInt()) {
+        Serial.printf("Changing delay to %d\r\n", i);
+        FlashDelay = i;
+      }
+
+      // Unrecognised command
+      else {
+        String s = "Unrecognised command: " + cmd + "\r\n";
+        send_str(sock_client, s);
+      }
+    }
+
+    // If we got here the connection has ended
+    Serial.println("Connection ended");
+  }
+}
+
+// ---------------------------------------------------------------------
+// Setup
+// ---------------------------------------------------------------------
+void setup() {
+  Serial.begin(115200);
+  while (!Serial)
+    delay(1000);
+  Serial.println("Starting Server ...");
+
+  // Configure the GPIO pin
+  pinMode(FlashPin, OUTPUT);
+
+  // Connect to the wifi
+  ConnectWiFi();
+
+  // Launch the comms task
+  xTaskCreate(CommsTask, "CommsTask", STACKSIZE, NULL, 1, &hCommsTask);
+
+  // Launch the LED flash task
+  xTaskCreate(FlashTask, "FlashTask", STACKSIZE, &FlashPin, 1, &hFlashTask);
+
+  // Pause a moment to let the tasks start
+  delay(100);
+  Serial.println("Started Server");
+}
+
+// ---------------------------------------------------------------------
+// The main loop just prints the wifi status
+// ---------------------------------------------------------------------
+void loop() {
+  Serial.printf("WiFi status = %d, signal = %d\n", WiFi.status(), WiFi.RSSI());
+  delay(30000);
+}

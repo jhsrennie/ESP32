@@ -1,0 +1,183 @@
+// ---------------------------------------------------------------------
+// Server using multiple tasks
+#include "WiFi.h"
+// ---------------------------------------------------------------------
+
+// WiFi credentials
+String SSID = "MySSID";
+String PWD  = "MyPassword";
+
+// Global variable to control the flash rate
+int FlashDelay = 5000;
+uint8_t FlashPin = 2;
+
+// Task handles
+TaskHandle_t hFlashTask, hCommsTask;
+// Experiment suggests 2000 is adequate
+#define STACKSIZE 2000
+
+// ---------------------------------------------------------------------
+// ConnectWiFi
+// ---------------------------------------------------------------------
+void ConnectWiFi() {
+  WiFi.begin(SSID, PWD, 6);
+  int loopcnt = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.printf("Connecting: time %d, WiFi status = %d, signal = %d\n", loopcnt++, WiFi.status(), WiFi.RSSI());
+    delay(1000);
+  }
+  Serial.printf("Connected: %s\n", WiFi.localIP().toString().c_str());
+}
+
+// ---------------------------------------------------------------------
+// Flash task
+// ---------------------------------------------------------------------
+void FlashTask(void* LEDPin) {
+  uint8_t pin = *((uint8_t*) LEDPin);
+
+  timeval tv_start;
+  gettimeofday(&tv_start, 0);
+
+  Serial.printf("Starting FlashTask(%d) on core %d\n", pin, xPortGetCoreID());
+  while (true) {
+    // We won't use a semaphore for now
+    int flash_delay = FlashDelay;
+
+    // Flash the LED
+    // #include <sys/time.h>
+    timeval tv;
+    gettimeofday(&tv, 0);
+    int elapsed = tv.tv_sec - tv_start.tv_sec;
+    Serial.printf("%d: FLASH %d!\n", elapsed, pin);
+    delay(flash_delay);
+  }
+}
+
+// ---------------------------------------------------------------------
+// Function to read a string from the network client
+// Strings are terminated by \n
+// ---------------------------------------------------------------------
+String CommsReadCmd(WiFiClient* pClient) {
+  String cmd = "";
+  while (true) {
+    // If no data is available delay slightly to avoid flogging the CPU
+    if (!pClient->available()) {
+      delay(100);
+      continue;
+    }
+
+    // Get the next character
+    char c = pClient->read();
+
+    // Ignore carriage returns
+    if (c == '\r') {
+      continue;
+    }
+
+    // Line feed ends a command
+    else if (c == '\n') {
+      return cmd;
+    }
+
+    // Else append the character to the command
+    else {
+      cmd += c;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+// Comms task
+// ---------------------------------------------------------------------
+void CommsTask(void* Unused) {
+  Serial.printf("Starting CommsTask() on core %d\n", xPortGetCoreID());
+  
+  // Listen on port 23
+  WiFiServer server(23);
+  server.begin();
+
+  // Loop to handle connections
+  while (true) {
+    // Wait for a connection
+    WiFiClient client = server.available();
+    // If there is no connection delay slightly so we aren't hogging the cpu
+    if (!client) {
+      delay(100);
+      continue;
+    }
+    Serial.printf("Accepted connection from %s\n", client.remoteIP().toString().c_str());
+    client.println("Welcome!");
+    client.println("Enter exit to leave");
+
+    // Read commands from the client
+    while (true) {
+      String cmd = CommsReadCmd(&client);
+
+      // Exit
+      if (cmd == "exit") {
+        client.println("Bye");
+        client.stop();
+        break;
+      }
+
+      // Suspend/resume the flashing
+      else if (cmd == "off") {
+        Serial.println("Suspending flash task");
+        vTaskSuspend(hFlashTask);
+      }
+      else if (cmd == "on") {
+        Serial.println("Resuming flash task");
+        vTaskResume(hFlashTask);
+      }
+
+      // If the command is a number use it to set the delay
+      else if (int i = cmd.toInt()) {
+        Serial.printf("Changing delay to %d\n", i);
+        FlashDelay = i;
+      }
+
+      // Unrecognised command
+      else {
+        client.println("Unrecognised command: " + cmd);
+      }
+    }
+    // If we got here the coinnection has ended
+    Serial.println("Connection ended");
+  }
+}
+
+// ---------------------------------------------------------------------
+// Setup
+// ---------------------------------------------------------------------
+void setup() {
+  Serial.begin(115200);
+  while (!Serial)
+    delay(1000);
+  Serial.println("Starting Server ...");
+
+  // Configure the GPIO pin
+  pinMode(FlashPin, OUTPUT);
+
+  // Connect to the wifi
+  ConnectWiFi();
+
+  // Launch the comms task
+  xTaskCreate(CommsTask, "CommsTask", STACKSIZE, NULL, 1, &hCommsTask);
+
+  // Launch the LED flash task
+  xTaskCreate(FlashTask, "FlashTask", STACKSIZE, &FlashPin, 1, &hFlashTask);
+
+  // Pause a moment to let the tasks start
+  delay(100);
+  Serial.println("Started Server");
+}
+
+// ---------------------------------------------------------------------
+// The main loop is not used
+// ---------------------------------------------------------------------
+void loop() {
+  // Suspend the main thread
+  Serial.println("Main thread sleeping");
+  vTaskSuspend(NULL);
+  delay(1000);
+}
