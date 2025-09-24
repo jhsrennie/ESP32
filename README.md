@@ -105,3 +105,9 @@ Test code to demonstrate how to use web sockets.
 
 WiFiSpeed  
 Test the wifi speed
+
+W5500SpeedTest  
+More advanced sketch that configures a W5500 and runs a web server on it.
+
+W55500Test  
+Sketch to show how to configure a W5500 ethernet module.
