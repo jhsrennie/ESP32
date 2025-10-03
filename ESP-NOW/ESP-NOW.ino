@@ -3,23 +3,15 @@
 // This reads strings typed in at the serial monitor and sends them to
 // all MAC addresses in the Peers array.
 //----------------------------------------------------------------------
-#include <WiFi.h>
+// We use only the IDF functions for ESP-NOW not any Arduino code so we
+// need the IDF headers.
+#include "esp_netif.h"
+#include "esp_wifi.h"
+#include "esp_mac.h"
 #include "esp_now.h"
 
-// The original ESP32 has the LED on pin 2 and HIGH turns the LED on
-// while LOW turns it off.
-#if CONFIG_IDF_TARGET_ESP32
-#define LED_GPIO 2
-#define LED_ON  HIGH
-#define LED_OFF LOW
-
-// The ESP32 C3 has the LED on pin 8 and HIGH turns the LED off while
-// LOW turns it on.
-#elif CONFIG_IDF_TARGET_ESP32C3
-#define LED_GPIO 8
-#define LED_ON  LOW
-#define LED_OFF HIGH
-#endif
+// Wifi channel to use
+#define ESPNOW_WIFI_CHANNEL 6
 
 // This is the array of all peer MAC addresses
 // Our MAC address must be in this list
@@ -43,28 +35,23 @@ int localMAC;
 #define MAC_PRINTF(a) a[0], a[1], a[2], a[3], a[4], a[5]
 
 //----------------------------------------------------------------------
-// This function connects to the wireless network
+// This function starts the wireless network
 //----------------------------------------------------------------------
-void connectWiFi() {
-  WiFi.begin();
-  WiFi.mode(WIFI_STA);
-  WiFi.setSleep(WIFI_PS_NONE);
-
-  // Get the MAC address
-  uint8_t mac[6] = {0};
-  WiFi.macAddress(mac);
-  Serial.printf("MAC address = %02x-%02x-%02x-%02x-%02x-%02x\n", MAC_PRINTF(mac));
-
-  // Find the local MAC address in the list of peers
-  for (localMAC = 0; localMAC < NUM_PEERS; localMAC++)
-    if (MAC_EQUAL(mac, Peers[localMAC]))
-      break;
-  // If we didn't find our address that's a fatal error so hlt now
-  if (localMAC == NUM_PEERS) {
-    Serial.println("Error: MAC address is not in list");
-    vTaskSuspend (NULL);
-  }
-  Serial.printf("Local MAC index = %d\n", localMAC);
+static void start_wifi(void)
+{
+  // I'm just going to assume all the functions succeed. There is no
+  // reason why they shouldn't since we are just using default settings.
+  esp_netif_init();
+  esp_event_loop_create_default();
+  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+  esp_wifi_init(&cfg);
+  // The default is to use flash memory, which we don't need here
+  esp_wifi_set_storage(WIFI_STORAGE_RAM);
+  esp_wifi_set_mode(WIFI_MODE_STA);
+  esp_wifi_start();
+  esp_wifi_set_channel(ESPNOW_WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  // Optionally set long range
+  //esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR);
 }
 
 //----------------------------------------------------------------------
@@ -78,11 +65,11 @@ void onRecv(const esp_now_recv_info_t *esp_now_info, const uint8_t *data, int da
 //----------------------------------------------------------------------
 // Function called when data is sent
 //----------------------------------------------------------------------
-void onSend(const uint8_t *mac_addr, esp_now_send_status_t status) {
+void onSend(const esp_now_send_info_t *tx_info, esp_now_send_status_t status) {
  if (status == ESP_NOW_SEND_SUCCESS)
-    Serial.printf("Data sent: %02x-%02x-%02x-%02x-%02x-%02x\n", MAC_PRINTF(mac_addr));
+    Serial.printf("Data sent: %02x-%02x-%02x-%02x-%02x-%02x\n", MAC_PRINTF(tx_info->des_addr));
  else
-    Serial.printf("Send failed: %02x-%02x-%02x-%02x-%02x-%02x\n", MAC_PRINTF(mac_addr));
+    Serial.printf("Send failed: %02x-%02x-%02x-%02x-%02x-%02x\n", MAC_PRINTF(tx_info->des_addr));
 }
 
 //----------------------------------------------------------------------
@@ -115,6 +102,22 @@ bool initNOW() {
   }
   Serial.println("Send callback configured");
 
+  // Get our MAC address
+  uint8_t mac[6] = {0};
+  esp_efuse_mac_get_default(mac);
+  Serial.printf("MAC address = %02x-%02x-%02x-%02x-%02x-%02x\n", MAC_PRINTF(mac));
+
+  // Find the local MAC address in the list of peers
+  for (localMAC = 0; localMAC < NUM_PEERS; localMAC++)
+    if (MAC_EQUAL(mac, Peers[localMAC]))
+      break;
+  // If we didn't find our address that's a fatal error so halt now
+  if (localMAC == NUM_PEERS) {
+    Serial.println("Error: MAC address is not in list");
+    vTaskSuspend (NULL);
+  }
+  Serial.printf("Local MAC index = %d\n", localMAC);
+
   // Add the peers
    esp_now_peer_info_t peer = {0};
    for (int i = 0; i < NUM_PEERS; i++) {
@@ -140,17 +143,14 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Connect the WiFi
-  connectWiFi();
+  // Start the WiFi
+  start_wifi();
 
   // Add all the peers
   initNOW();
 
-  // Flash the LED to indicate it is connected
-  pinMode(LED_GPIO, OUTPUT);
-  digitalWrite(LED_GPIO, LED_ON);
-  delay(1000);
-  digitalWrite(LED_GPIO, LED_OFF);
+  // Done!
+  Serial.println("Initialisation complete");
 }
 
 //----------------------------------------------------------------------

@@ -6,4 +6,4 @@ You need to fill in the Peers array with the MAC addresses of all the boards you
 
 The sketch will print confirmation that a string has been sent to the serial monitor, and whenever it receives a string it will print what it received to the serial monitor.
 
-The ESP32 needs to be connected to a wireless network for ESP-NOW to work. You will need to fill in the SSID and password of your network.
+The ESP32 does not need to be connected to a wireless network, but it needs the wifi to be started. The sketch uses IDF functions to configure and start the network.
