@@ -16,6 +16,9 @@ Simply upload this code and after 5 seconds it will print:
 
 where nnn is the number of passes achieved in 5 seconds
 
-On the original 240MHz ESP32 I got 150 passes
-On a 160MHz ESP32-C3 I got 109 passes
+Original 240MHz ESP32  152 passes
+S3 supermini           187 passes
+C6 supermini           128 passes
+C3 supermini           109 passes
+
 On my laptop with an i5-1240p CPU I get around 7100 passes
