@@ -14,7 +14,7 @@ copied and pasted with the bare minimum of changes to make it run on an ESP32. S
 
 where nnn is the number of passes achieved in 5 seconds
 
-I initially ran this using the Arduino IDE and the code for that is in the SieveArd subdirectory. Then I got curious about the difference in the results and reran it using the ESP-IDF to compile the program. This code is in the SieveIDF subdirectory. Note that you need to disable the Watchdog timer to run the IDF code.
+I initially ran this using the Arduino IDE and the code for that is in the SieveArd subdirectory. Then I got curious about the difference in the results and reran it using the ESP-IDF to compile the program. This code is in the SieveIDF subdirectory.
 
 I have listed both sets of results below. The Arduino IDE optimises for size (-Os) so I used the same optimisation for the IDF build, but since the IDF also allows me to optimise for speed (-O2) I tried that as well. The IDF results show both figures.
 
@@ -37,4 +37,4 @@ S3 supermini           188  200
 C6 supermini           129  141
 C3 supermini           106  133
 
-On my laptop with an i5-1240p CPU I get around 7100 passes
+For comparison, on my laptop with an i5-1240p CPU I get around 18500 passes when compiled with -Os and around 23500 when compiled with -O2.
