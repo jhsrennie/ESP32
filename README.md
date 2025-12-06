@@ -74,7 +74,7 @@ Server
 Implements a simple telnet server using Arduino funtions and also using BSD sockets.
 
 SieveBenchmark  
-Speed test. Versions for the Arduino IDE and ESP-IDF.
+Speed test sketch
 
 SocketsAPI  
 Test using BSD sockets for TCP/IP connections.
@@ -94,12 +94,6 @@ Test running tasks on both cores of the Xtensa CPU.
 VL53L0X  
 Test using a VL53L0X lidar sensor
 
-W5500SpeedTest  
-More advanced sketch that configures a W5500 and runs a web server on it.
-
-W55500Test  
-Sketch to show how to configure a W5500 ethernet module.
-
 WaveGen  
 Test using continuous D to A conversion. Generates waveforms with various shapes.
 
@@ -109,6 +103,14 @@ Test code to demonstrate how to write a simple HTTP server using the WebServer c
 WebSock  
 Test code to demonstrate how to use web sockets.
 
+WiFiEvents  
+This demonstrates how to use a wifi event handle with the Arduino IDE.
+
 WiFiSpeed  
 Test the wifi speed
 
+W5500SpeedTest  
+More advanced sketch that configures a W5500 and runs a web server on it.
+
+W55500Test  
+Sketch to show how to configure a W5500 ethernet module.
