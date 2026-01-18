@@ -19,6 +19,9 @@ Demonstrate how to monitor system CPU usage
 CPU/TaskCPU  
 Demonstrate how to monitor CPU usage for a single task
 
+CYD  
+Collection of sketches for the "Cheap Yellow Display"
+
 DAC  
 Very simple sketch using the Arduino functions to do analogue output and input.
 
