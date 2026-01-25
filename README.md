@@ -109,6 +109,9 @@ Test code to demonstrate how to use web sockets.
 WiFiEvents  
 This demonstrates how to use a wifi event handle with the Arduino IDE.
 
+WiFiScan  
+Wifi packet sniffer to demonstrate wifi promiscuous mode
+
 WiFiSpeed  
 Test the wifi speed
 
