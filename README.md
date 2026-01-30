@@ -82,6 +82,9 @@ Speed test sketch
 SocketsAPI  
 Test using BSD sockets for TCP/IP connections.
 
+Spiffs  
+Example sketch showing how to use the SPIFFS file system
+
 TestI2C  
 Very simple test of I2C functions.
 
