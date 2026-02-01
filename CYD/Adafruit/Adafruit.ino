@@ -32,7 +32,11 @@
 #define TFT_SCLK 14
 #define TFT_RST  -1
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST, TFT_MISO);
+// Use the following two lines for hardware SPI (fast)
+SPIClass tftSPI = SPIClass(HSPI);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&tftSPI, TFT_DC, TFT_CS, TFT_RST);
+// Use the following line for software SPI (slow)
+// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST, TFT_MISO);
 
 void setup() {
   Serial.begin(115200);
