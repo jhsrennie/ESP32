@@ -12,6 +12,7 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
   Serial.println("LDR test");
+  analogSetAttenuation(ADC_0db);
 }
 
 void loop() {
