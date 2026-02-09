@@ -15,8 +15,10 @@
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
-// Local font
+// Local font for the 7 segment display
 #include "DSEG7_Classic_Bold_48.h"
+// Font sizes in pixels
+#include "FontMetricsGFX.h"
 
 // Sensors
 #include <Adafruit_AHTX0.h>
@@ -29,12 +31,12 @@ Adafruit_BMP280 bmp;
 bool aht_init = true, bmp_init = true;
 float Temperature = 0, Humidity = 0, Pressure = 0;
 
-
 // WiFi credentials
 #define WIFI_SSID "MYSSID"
 #define WIFI_PWD  "MYPASS"
 
 // NTP server details
+#define TIMEZONE  "GMT0BST,M3.5.0/1,M10.5.0"
 #define NTPSERVER "pool.ntp.org"
 #define NTP_RETRIES 3
 #define NTP_FAILS   3
@@ -51,42 +53,47 @@ float Temperature = 0, Humidity = 0, Pressure = 0;
 #define COL_FORE ILI9341_WHITE
 
 // Screen size
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
+#define SCREEN_WIDTH 320
+#define SCREEN_DEPTH 240
+
+// Size of the 48pt 7 segment font
+#define DEPTH_48PT   53
+#define VOFFSET_48PT  1
 
 // Position of time
-// #define TIME_FONT &FreeSans24pt7b
-// #define TIME_LEFT    65
-// #define TIME_BASE    70
-// #define TIME_SPACE   65
-// #define TIME_HEIGHT  50
 #define TIME_FONT &DSEG7_Classic_Bold_48
+#define TIME_HEIGHT  53 // Size in pixels of the font
+#define TIME_VOFFSET  1 // Offset needed to leave 1 pixel below the lowest descender
 #define TIME_LEFT    20
 #define TIME_BASE    75
-#define TIME_SPACE   90
-#define TIME_HEIGHT  50
+#define TIME_SPACE   90 // Space between "hh:", "mm:" and "ss:"
 
 #define DATE_FONT &FreeSans12pt7b
+#define DATE_HEIGHT  DEPTH_12PT
+#define DATE_VOFFSET VOFFSET_12PT
 #define DATE_LEFT    60
-#define DATE_HEIGHT  30
+#define DATE_BASE   105
 
 #define TEMP_FONT  &FreeSans24pt7b
 #define TEMP_FONT2 &FreeSans9pt7b // used for degree symbol
+#define TEMP_HEIGHT  DEPTH_24PT
+#define TEMP_VOFFSET VOFFSET_24PT
 #define TEMP_LEFT     10
 #define TEMP_BASE    180
-#define TEMP_WIDTH   100
-#define TEMP_HEIGHT   50
+#define TEMP_WIDTH   160
 
 #define HUMID_FONT &FreeSans12pt7b
+#define HUMID_HEIGHT  DEPTH_12PT
+#define HUMID_VOFFSET VOFFSET_12PT
 #define HUMID_LEFT   170
 #define HUMID_BASE   190
-#define HUMID_SPACE   70
-#define HUMID_HEIGHT  30
+#define HUMID_SPACE   70 // Distance from HUMID_LEFT to numbers
 
 #define STATUS_FONT &FreeSans9pt7b
-#define STATUS_LEFT      0
-#define STATUS_BASE    235
-#define STATUS_HEIGHT   20
+#define STATUS_HEIGHT  DEPTH_9PT
+#define STATUS_VOFFSET VOFFSET_9PT
+#define STATUS_LEFT    0
+#define STATUS_BASE    (SCREEN_DEPTH-STATUS_VOFFSET)
 
 // Create the global display object
 #define TFT_CS   15 
@@ -141,6 +148,8 @@ void UpdateTime(void* Unused) {
 
       // Call init to start the sync
       esp_netif_sntp_init(&config);
+      configTzTime(TIMEZONE, NTPSERVER);
+
       // And wait for the sync to complete
       esp_err_t e = esp_netif_sntp_sync_wait(pdMS_TO_TICKS(10000));
       // Deinitialise after the sync has completed
@@ -241,16 +250,17 @@ void GetTemp() {
 //----------------------------------------------------------------------
 void DisplayStatus(char *Format, ...) {
   // Clear the status area
-  tft.fillRect(0, STATUS_BASE-STATUS_HEIGHT+5, SCREEN_WIDTH, STATUS_HEIGHT, COL_BACK);
-  tft.setFont(STATUS_FONT);
+  tft.fillRect(0, STATUS_BASE-STATUS_HEIGHT+STATUS_VOFFSET, SCREEN_WIDTH, STATUS_HEIGHT, COL_BACK);
 
-  // Display the message
+  // Format the message
   char s[256];
   va_list ap;
   va_start(ap, Format);
   vsnprintf(s, 256, Format, ap);
   va_end(ap);
 
+  // Display the message
+  tft.setFont(STATUS_FONT);
   tft.setCursor(STATUS_LEFT, STATUS_BASE);
   tft.print(s);
 }
@@ -276,7 +286,7 @@ void DisplayTime() {
 
   // write the hour
   if (tm_last.tm_hour != tm_now->tm_hour) {
-    tft.fillRect(TIME_LEFT, TIME_BASE-TIME_HEIGHT, TIME_SPACE, TIME_HEIGHT, COL_BACK);
+    tft.fillRect(TIME_LEFT, TIME_BASE-TIME_HEIGHT+TIME_VOFFSET, TIME_SPACE, TIME_HEIGHT, COL_BACK);
     tft.setTextColor(COL_FORE);
     tft.setCursor(TIME_LEFT, TIME_BASE);
     tft.printf("%02d:", tm_now->tm_hour);
@@ -284,7 +294,7 @@ void DisplayTime() {
 
   // write the minute
   if (tm_last.tm_min != tm_now->tm_min) {
-    tft.fillRect(TIME_LEFT+TIME_SPACE, TIME_BASE-TIME_HEIGHT, TIME_SPACE, TIME_HEIGHT, COL_BACK);
+    tft.fillRect(TIME_LEFT+TIME_SPACE, TIME_BASE-TIME_HEIGHT+TIME_VOFFSET, TIME_SPACE, TIME_HEIGHT, COL_BACK);
     tft.setTextColor(COL_FORE);
     tft.setCursor(TIME_LEFT+TIME_SPACE, TIME_BASE);
     tft.printf("%02d:", tm_now->tm_min);
@@ -292,7 +302,7 @@ void DisplayTime() {
 
   // write the second
   if (tm_last.tm_sec != tm_now->tm_sec) {
-    tft.fillRect(TIME_LEFT+2*TIME_SPACE, TIME_BASE-TIME_HEIGHT, TIME_SPACE, TIME_HEIGHT+2, COL_BACK);
+    tft.fillRect(TIME_LEFT+2*TIME_SPACE, TIME_BASE-TIME_HEIGHT+TIME_VOFFSET, TIME_SPACE, TIME_HEIGHT+2, COL_BACK);
     tft.setTextColor(COL_FORE);
     tft.setCursor(TIME_LEFT+2*TIME_SPACE, TIME_BASE);
     tft.printf("%02d", tm_now->tm_sec);
@@ -300,13 +310,13 @@ void DisplayTime() {
 
   // Print the date on the next line
   if (tm_last.tm_mday != tm_now->tm_mday || tm_last.tm_mon != tm_now->tm_mon || tm_last.tm_year != tm_now->tm_year) {
-    tft.fillRect(0, TIME_BASE, SCREEN_WIDTH-1, DATE_HEIGHT, COL_BACK);
+    tft.fillRect(0, DATE_BASE-DATE_HEIGHT+DATE_VOFFSET, SCREEN_WIDTH, DATE_HEIGHT, COL_BACK);
     #define LEN_BUF 256
     char buf[LEN_BUF];
     strftime(buf, LEN_BUF, "%a, %d %b %Y", tm_now);
 
     tft.setFont(DATE_FONT);
-    tft.setCursor(DATE_LEFT, TIME_BASE + DATE_HEIGHT);
+    tft.setCursor(DATE_LEFT, DATE_BASE);
     tft.print(buf);
   }
 
@@ -320,7 +330,9 @@ void DisplayTime() {
 // This displays the temperature, humidity and pressure
 //----------------------------------------------------------------------
 void DisplayTemp() {
-  tft.fillRect(TEMP_LEFT, TEMP_BASE-TEMP_HEIGHT+4, TEMP_WIDTH, TEMP_HEIGHT, COL_BACK);
+  // Erase the previous temperature
+  tft.fillRect(TEMP_LEFT, TEMP_BASE-TEMP_HEIGHT+TEMP_VOFFSET, TEMP_WIDTH, TEMP_HEIGHT, COL_BACK);
+
   // Display the temp only if the AHT20 was initialised
   if (aht_init) {
     tft.setCursor(TEMP_LEFT, TEMP_BASE);
@@ -337,7 +349,7 @@ void DisplayTemp() {
   }
 
   // Humidity and pressure
-  tft.fillRect(HUMID_LEFT, HUMID_BASE-2*HUMID_HEIGHT+4, SCREEN_WIDTH-HUMID_LEFT, 2*HUMID_HEIGHT, COL_BACK);
+  tft.fillRect(HUMID_LEFT, HUMID_BASE-2*HUMID_HEIGHT+HUMID_VOFFSET, SCREEN_WIDTH-HUMID_LEFT, 2*HUMID_HEIGHT, COL_BACK);
   tft.setFont(HUMID_FONT);
 
   // Display the humidity only if the AHT20 was initialised

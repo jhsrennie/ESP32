@@ -11,11 +11,14 @@ This is code to show how to adjust the intensity of the backlight using LEDC
 Blink  
 This is example code to show how to control the on board LED
 
-Clock  
+ClockGFX  
 This is a sketch to make the CYD work as a digital clock using SNTP to get the time from the Internet. It requires an AHT20+BMP280 sensor to get the temperature, humidity and pressure, but it will work fine without it. This version uses FTF_eSPI for the graphics.
 
-ClockGFX
-This is the clock app using the ArduinoGFX library instead of TFT_eSPI.
+ConsoleGFX  
+This is a class to implement a simple scrolling console on the CYD
+
+FontMetricsGFX  
+This is a sketch to measure the sizes in pixels that the Arduino GFX free fonts are rendered on the CYD
 
 LDR  
 This is example code to use the on board light dependent resistor
