@@ -1,20 +1,63 @@
 //----------------------------------------------------------------------
 // CYD Clock program
 // =================
+// This has been written so it can use either the TFT_eSPI library or
+// the ArduinoGFX library. They are similar enough that only a few
+// conditional blocks are needed.
 //----------------------------------------------------------------------
+// Use this define to selet the TFT_eSPI library. If this is not defined
+// the ArduinoGFX library is used instead.
+#define UseTFT_eSPI
+
 #include <WiFi.h>
 #include <esp_netif_sntp.h>
 #include <driver/ledc.h>
 #include <time.h>
-#include <TFT_eSPI.h>
-#include <Free_Fonts.h>
 #include <XPT2046_Touchscreen.h>
+
+// Choose the graphics library
+#ifdef UseTFT_eSPI
+#include <TFT_eSPI.h>
+#else
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
+#endif
+
+// Include the Arduino GFX fonts if necessary
+#ifndef UseTFT_eSPI
+#include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSans24pt7b.h>
+#endif
+
+// Local font for the 7 segment display
+#include "DSEG7_Classic_Bold_48.h"
+// Font sizes in pixels
+#include "FontMetricsGFX.h"
+
+// TFT_eSPI uses the setFreeFont() function instead of setFont() for the free fonts
+#ifdef UseTFT_eSPI
+#define setFont setFreeFont
+#endif
+
+// Sensors
+#include <Adafruit_AHTX0.h>
+#include <Adafruit_BMP280.h>
+
+#define GPIO_SDA 22
+#define GPIO_SCL 27
+Adafruit_AHTX0 aht;
+Adafruit_BMP280 bmp;
+bool aht_init = true, bmp_init = true;
+float Temperature = 0, Humidity = 0, Pressure = 0;
 
 // WiFi credentials
 #define WIFI_SSID "MYSSID"
 #define WIFI_PWD  "MYPASS"
 
 // NTP server details
+#define TIMEZONE  "GMT0BST,M3.5.0/1,M10.5.0"
 #define NTPSERVER "pool.ntp.org"
 #define NTP_RETRIES 3
 #define NTP_FAILS   3
@@ -27,65 +70,84 @@
 #define CLK_CFG    LEDC_USE_APB_CLK
 
 // Colours
+#ifdef UseTFT_eSPI
 #define COL_BACK TFT_BLACK
 #define COL_FORE TFT_WHITE
+#else
+#define COL_BACK ILI9341_BLACK
+#define COL_FORE ILI9341_WHITE
+#endif
 
 // Screen size
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
+#define SCREEN_WIDTH 320
+#define SCREEN_DEPTH 240
+
+// Size of the 48pt 7 segment font
+#define DEPTH_48PT   53
+#define VOFFSET_48PT  1
 
 // Position of time
-#define TIME_FONT     7 // 48 pixel 7 segment font
-#define TIME_LEFT    52
-#define TIME_TOP     30 // Use top for built in fonts
-#define TIME_SPACE   75
-#define TIME_HEIGHT  50
+#define TIME_FONT &DSEG7_Classic_Bold_48
+#define TIME_HEIGHT  53 // Size in pixels of the font
+#define TIME_VOFFSET  1 // Offset needed to leave 1 pixel below the lowest descender
+#define TIME_LEFT    20
+#define TIME_BASE    75
+#define TIME_SPACE   90 // Space between "hh:", "mm:" and "ss:"
 
+#define DATE_FONT &FreeSans12pt7b
+#define DATE_HEIGHT  DEPTH_12PT
+#define DATE_VOFFSET VOFFSET_12PT
+#define DATE_LEFT    60
+#define DATE_BASE   105
 
-#define DATE_FONT FSS12 // The date is in 12 point sans serif
-#define DATE_BASE   110 // Use base for free fonts
-#define DATE_HEIGHT  30
-
-#define TEMP_FONT  FSS24 // The temperature is in 24 point sans serif
+#define TEMP_FONT  &FreeSans24pt7b
+#define TEMP_FONT2 &FreeSans9pt7b // used for degree symbol
+#define TEMP_HEIGHT  DEPTH_24PT
+#define TEMP_VOFFSET VOFFSET_24PT
 #define TEMP_LEFT     10
-#define TEMP_BASE    180 // Use base for free fonts
-#define TEMP_WIDTH   100
-#define TEMP_HEIGHT   50
+#define TEMP_BASE    180
+#define TEMP_WIDTH   160
 
-#define HUMID_FONT FSS12 // The humidity and pressure are in 12 point sans serif
-#define HUMID_LEFT   130
-#define HUMID_BASE   190 // Use base for free fonts
-#define HUMID_SPACE  110
-#define HUMID_HEIGHT  30
+#define HUMID_FONT &FreeSans12pt7b
+#define HUMID_HEIGHT  DEPTH_12PT
+#define HUMID_VOFFSET VOFFSET_12PT
+#define HUMID_LEFT   170
+#define HUMID_BASE   190
+#define HUMID_SPACE   70 // Distance from HUMID_LEFT to numbers
 
-#define STATUS_FONT   FSS9 // The status message is in 9 point sans serif
-#define STATUS_LEFT      0
-#define STATUS_BASE    235 // Use base for free fonts
-#define STATUS_HEIGHT   20
+#define STATUS_FONT &FreeSans9pt7b
+#define STATUS_HEIGHT  DEPTH_9PT
+#define STATUS_VOFFSET VOFFSET_9PT
+#define STATUS_LEFT    0
+#define STATUS_BASE    (SCREEN_DEPTH-STATUS_VOFFSET)
 
-// The display object
+// Create the global display object
+#ifdef UseTFT_eSPI
 TFT_eSPI tft = TFT_eSPI();
+#else
+#define TFT_CS   15 
+#define TFT_DC    2
+#define TFT_RST  -1
+SPIClass tftSPI = SPIClass(HSPI);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&tftSPI, TFT_DC, TFT_CS, TFT_RST);
+#endif
 
-// Touchscreen pins
+// Create the global touchscreen object
 #define XPT2046_IRQ  36  // T_IRQ
 #define XPT2046_MOSI 32  // T_DIN
 #define XPT2046_MISO 39  // T_OUT
 #define XPT2046_CLK  25  // T_CLK
 #define XPT2046_CS   33  // T_CS
 
-// Create the global touchscreen object
 SPIClass touchscreenSPI = SPIClass(VSPI);
 XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
-
-// Temperature etc
-int Temperature, Humidity, Pressure;
 
 //----------------------------------------------------------------------
 // UpdateTime
 //-----------
 //----------------------------------------------------------------------
 void UpdateTime(void* Unused) {
-  #define MAX_RETRIES 3
+#define MAX_RETRIES 3
   int time_retries;
 
   // Initialise the SNTP system
@@ -115,6 +177,8 @@ void UpdateTime(void* Unused) {
 
       // Call init to start the sync
       esp_netif_sntp_init(&config);
+      configTzTime(TIMEZONE, NTPSERVER);
+
       // And wait for the sync to complete
       esp_err_t e = esp_netif_sntp_sync_wait(pdMS_TO_TICKS(10000));
       // Deinitialise after the sync has completed
@@ -146,15 +210,66 @@ void UpdateTime(void* Unused) {
 }
 
 //----------------------------------------------------------------------
+// InitSensors
+// -----------
+// Initialise the AHT20 and BMP280
+//----------------------------------------------------------------------
+void InitSensors() {
+  // Set the I2C pins that the CYD uses
+  Wire.setPins(GPIO_SDA, GPIO_SCL);
+  Wire.begin();
+
+  // Initialise the AHT20
+  if (aht.begin()) {
+    Serial.println("AHT20 initialised");
+    aht_init = true;
+  }
+  else {
+    Serial.println("AHT20 not found");
+    aht_init = false;
+  }
+
+  if (bmp.begin()) {
+    // Default settings from datasheet
+    bmp.setSampling(
+      Adafruit_BMP280::MODE_NORMAL,     // Operating Mode
+      Adafruit_BMP280::SAMPLING_X2,     // Temp. oversampling
+      Adafruit_BMP280::SAMPLING_X16,    // Pressure oversampling
+      Adafruit_BMP280::FILTER_X16,      // Filtering
+      Adafruit_BMP280::STANDBY_MS_500); // Standby time
+    Serial.println("BMP280 initialised");
+    bmp_init = true;
+  }
+  else {
+    Serial.println("BMP280 not found");
+    bmp_init = false;
+  }
+}
+
+//----------------------------------------------------------------------
 // GetTemp
 //--------
 // read the temperature, etc from the AHT11
 //----------------------------------------------------------------------
 void GetTemp() {
-  // For now make up random readings
-  Temperature = 15 + micros() % 10;
-  Humidity = 50 + micros() % 50;
-  Pressure = 950 + micros() % 100;
+  // Query the AHT20
+  if (aht_init) {
+    sensors_event_t humidity, temp;
+    aht.getEvent(&humidity, &temp);
+    Serial.printf("Temp: %f, humidity: %f\n", temp.temperature, humidity.relative_humidity);
+
+    Temperature = temp.temperature;        // Temp is in Celsius
+    Humidity = humidity.relative_humidity; // RH is in %
+  }
+
+  // Query the BMP280
+  if (bmp_init) {
+    float bmp_temp = bmp.readTemperature();  // Temp is in Celsius
+    float bmp_pressure = bmp.readPressure(); // Pressure is in Pa
+    Serial.printf("Temp: %f, pressure: %f\n", bmp_temp, bmp_pressure);
+
+    Pressure = bmp_pressure;
+  }
 }
 
 //----------------------------------------------------------------------
@@ -164,16 +279,17 @@ void GetTemp() {
 //----------------------------------------------------------------------
 void DisplayStatus(char *Format, ...) {
   // Clear the status area
-  tft.fillRect(0, STATUS_BASE-STATUS_HEIGHT+5, SCREEN_WIDTH, STATUS_HEIGHT, COL_BACK);
-  tft.setFreeFont(STATUS_FONT);
+  tft.fillRect(0, STATUS_BASE-STATUS_HEIGHT+STATUS_VOFFSET, SCREEN_WIDTH, STATUS_HEIGHT, COL_BACK);
 
-  // Display the message
+  // Format the message
   char s[256];
   va_list ap;
   va_start(ap, Format);
   vsnprintf(s, 256, Format, ap);
   va_end(ap);
 
+  // Display the message
+  tft.setFont(STATUS_FONT);
   tft.setCursor(STATUS_LEFT, STATUS_BASE);
   tft.print(s);
 }
@@ -195,44 +311,42 @@ void DisplayTime() {
   struct tm* tm_now = localtime(&tt);
 
   // Format and print the time
-  tft.setTextFont(TIME_FONT);
-  tft.setTextSize(1);
+  tft.setFont(TIME_FONT);
 
   // write the hour
   if (tm_last.tm_hour != tm_now->tm_hour) {
-    tft.fillRect(TIME_LEFT, TIME_TOP, TIME_SPACE, TIME_HEIGHT, COL_BACK);
+    tft.fillRect(TIME_LEFT, TIME_BASE-TIME_HEIGHT+TIME_VOFFSET, TIME_SPACE, TIME_HEIGHT, COL_BACK);
     tft.setTextColor(COL_FORE);
-    tft.setCursor(TIME_LEFT, TIME_TOP);
+    tft.setCursor(TIME_LEFT, TIME_BASE);
     tft.printf("%02d:", tm_now->tm_hour);
   }
 
   // write the minute
   if (tm_last.tm_min != tm_now->tm_min) {
-    tft.fillRect(TIME_LEFT+TIME_SPACE, TIME_TOP, TIME_SPACE, TIME_HEIGHT, COL_BACK);
+    tft.fillRect(TIME_LEFT+TIME_SPACE, TIME_BASE-TIME_HEIGHT+TIME_VOFFSET, TIME_SPACE, TIME_HEIGHT, COL_BACK);
     tft.setTextColor(COL_FORE);
-    tft.setCursor(TIME_LEFT+TIME_SPACE, TIME_TOP);
+    tft.setCursor(TIME_LEFT+TIME_SPACE, TIME_BASE);
     tft.printf("%02d:", tm_now->tm_min);
   }
 
   // write the second
   if (tm_last.tm_sec != tm_now->tm_sec) {
-    tft.fillRect(TIME_LEFT+2*TIME_SPACE, TIME_TOP, TIME_SPACE, TIME_HEIGHT, COL_BACK);
+    tft.fillRect(TIME_LEFT+2*TIME_SPACE, TIME_BASE-TIME_HEIGHT+TIME_VOFFSET, TIME_SPACE, TIME_HEIGHT+2, COL_BACK);
     tft.setTextColor(COL_FORE);
-    tft.setCursor(TIME_LEFT+2*TIME_SPACE, TIME_TOP);
+    tft.setCursor(TIME_LEFT+2*TIME_SPACE, TIME_BASE);
     tft.printf("%02d", tm_now->tm_sec);
   }
 
   // Print the date on the next line
   if (tm_last.tm_mday != tm_now->tm_mday || tm_last.tm_mon != tm_now->tm_mon || tm_last.tm_year != tm_now->tm_year) {
-    tft.fillRect(0, DATE_BASE-DATE_HEIGHT+2, SCREEN_WIDTH-1, DATE_HEIGHT, COL_BACK);
-
+    tft.fillRect(0, DATE_BASE-DATE_HEIGHT+DATE_VOFFSET, SCREEN_WIDTH, DATE_HEIGHT, COL_BACK);
     #define LEN_BUF 256
     char buf[LEN_BUF];
     strftime(buf, LEN_BUF, "%a, %d %b %Y", tm_now);
 
-    tft.setFreeFont(DATE_FONT);
-    tft.setTextDatum(BC_DATUM);
-    tft.drawString(buf, SCREEN_WIDTH/2, DATE_BASE);
+    tft.setFont(DATE_FONT);
+    tft.setCursor(DATE_LEFT, DATE_BASE);
+    tft.print(buf);
   }
 
   // Save the time so it can be erased next loop
@@ -245,28 +359,43 @@ void DisplayTime() {
 // This displays the temperature, humidity and pressure
 //----------------------------------------------------------------------
 void DisplayTemp() {
-  // Temperature
-  tft.fillRect(TEMP_LEFT, TEMP_BASE-TEMP_HEIGHT+4, TEMP_WIDTH, TEMP_HEIGHT, COL_BACK);
-  tft.setFreeFont(TEMP_FONT);
-  tft.setCursor(TEMP_LEFT, TEMP_BASE);
-  tft.printf("%02d C", Temperature);
-  tft.setFreeFont(FSS9);
-  tft.setCursor(TEMP_LEFT+55, TEMP_BASE-25);
-  tft.print("o");
+  // Erase the previous temperature
+  tft.fillRect(TEMP_LEFT, TEMP_BASE-TEMP_HEIGHT+TEMP_VOFFSET, TEMP_WIDTH, TEMP_HEIGHT, COL_BACK);
+
+  // Display the temp only if the AHT20 was initialised
+  if (aht_init) {
+    tft.setCursor(TEMP_LEFT, TEMP_BASE);
+    tft.setFont(TEMP_FONT);
+    tft.printf("%.1f", Temperature);
+    // We need to move the cursor up for the degrees symbol
+    tft.setCursor(tft.getCursorX(), TEMP_BASE-25);
+    tft.setFont(TEMP_FONT2);
+    tft.print("o");
+    // Then move it down again
+    tft.setCursor(tft.getCursorX(), TEMP_BASE);
+    tft.setFont(TEMP_FONT);
+    tft.print("C");
+  }
 
   // Humidity and pressure
-  tft.fillRect(HUMID_LEFT, HUMID_BASE-2*HUMID_HEIGHT+4, SCREEN_WIDTH-HUMID_LEFT, 2*HUMID_HEIGHT, COL_BACK);
-  tft.setFreeFont(HUMID_FONT);
+  tft.fillRect(HUMID_LEFT, HUMID_BASE-2*HUMID_HEIGHT+HUMID_VOFFSET, SCREEN_WIDTH-HUMID_LEFT, 2*HUMID_HEIGHT, COL_BACK);
+  tft.setFont(HUMID_FONT);
 
-  tft.setCursor(HUMID_LEFT, HUMID_BASE-HUMID_HEIGHT);
-  tft.print("Humidity");
-  tft.setCursor(HUMID_LEFT, HUMID_BASE);
-  tft.print("Pressure");
+  // Display the humidity only if the AHT20 was initialised
+  if (aht_init) {
+    tft.setCursor(HUMID_LEFT, HUMID_BASE-HUMID_HEIGHT);
+    tft.print("RH");
+    tft.setCursor(HUMID_LEFT+HUMID_SPACE, HUMID_BASE-HUMID_HEIGHT);
+    tft.printf("%d%%", (int) Humidity);
+  }
 
-  tft.setCursor(HUMID_LEFT+HUMID_SPACE, HUMID_BASE-HUMID_HEIGHT);
-  tft.printf("%d%%", Humidity);
-  tft.setCursor(HUMID_LEFT+HUMID_SPACE, HUMID_BASE);
-  tft.printf("%d", Pressure);
+  // Display the pressure only if the BMP280 was initialised
+  if (bmp_init) {
+    tft.setCursor(HUMID_LEFT, HUMID_BASE);
+    tft.print("Press");
+    tft.setCursor(HUMID_LEFT+HUMID_SPACE, HUMID_BASE);
+    tft.printf("%d", (int) (Pressure/101.325));
+  }
 }
 
 //----------------------------------------------------------------------
@@ -314,23 +443,29 @@ void setup() {
   delay(2000);
   Serial.println("Starting Clock");
 
-  // Start the tft display and set it to black
+  // Initialise the display
+#ifdef UseTFT_eSPI
   tft.init();
-  // My display needs the colours inverted for some reason
   tft.invertDisplay(true);
-  // This is the display in landscape with the origin at top left
   tft.setRotation(3);
-  // Clear the screen before writing to it
+#else
+  tft.begin();
+  tft.setRotation(0);
+#endif
   tft.fillScreen(COL_BACK);
   DisplayStatus("Starting clock ...");
 
   // Start the task to get the time
   TaskHandle_t h;
-  xTaskCreate(UpdateTime, "UpdateTime", 2000, NULL, 2, &h);
+  xTaskCreate(UpdateTime, "UpdateTime", 4000, NULL, 2, &h);
 
   // Start the SPI for the touchscreen and init the touchscreen
   touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
   touchscreen.begin(touchscreenSPI);
+
+  // Initialise the sensors
+  Serial.println("Initialising sensors");
+  InitSensors();
 }
 
 //----------------------------------------------------------------------
