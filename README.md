@@ -104,7 +104,7 @@ WaveGen
 Test using continuous D to A conversion. Generates waveforms with various shapes.
 
 WebServer  
-Test code to demonstrate how to write a simple HTTP server using the WebServer class.
+Test code to demonstrate how to write a simple HTTP server.
 
 WebSock  
 Test code to demonstrate how to use web sockets.

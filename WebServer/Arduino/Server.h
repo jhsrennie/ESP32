@@ -1,0 +1,12 @@
+//----------------------------------------------------------------------
+// Server.h
+// ========
+// Web server code
+//----------------------------------------------------------------------
+#ifndef _INC_SERVER
+#define _INC_SERVER
+
+bool ServerSetup();
+void ServerLoop();
+
+#endif // _INC_SERVER
