@@ -7,3 +7,5 @@ You simply add CYDConsole.cpp and .h to your sketch then all you need to write t
 CYDConsole con;
 con.init();
 con.printf("foo");
+
+This uses the Adafruit ILI9341 library. See the note on the screen issue with the CYD in the CYD/README.md directory.
