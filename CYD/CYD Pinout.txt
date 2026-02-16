@@ -1,0 +1,55 @@
+### Display Pins
+
+```
+MISO      GPIO 12
+MOSI      GPIO 13
+SCKL      GPIO 14
+CS        GPIO 15
+DC        GPIO  2
+Backlight GPIO 21
+```
+
+### Touchscreen Pins
+
+```
+IRQ       GPIO 36
+MOSI      GPIO 32
+MISO      GPIO 39
+CLK       GPIO 25
+CS        GPIO 33
+```
+
+### RGB LED
+
+```
+Red LED   GPIO 4
+Green LED GPIO 16
+Blue LED  GPIO 17
+```
+
+Important: The RGB LEDs work with inverted logic, because they are active low. This means that if you set them to HIGH = OFF and LOW = ON.
+
+### MicroSD Card Pins
+
+MISO      GPIO 19
+MOSI      GPIO 23
+SCK       GPIO 18
+CS        GPIO 5
+
+### Light Dependent Resistor
+
+```
+LDR       GPIO 34
+```
+
+### Connectors
+
+In the P3 connector, you have a GND pin and GPIO 35, GPIO 22, and GPIO 21.
+
+Please note that GPIO 22 is also used on the CN1 connector and that GPIO 21 is used as a backlight for the display. So, as long as the backlight is on, GPIO 21 will be on.
+
+In the CN1 connector, you have GND, GPIO 22, GPIO 27 and 3V3 pins. Please note that GPIO22 is also available on the P3 connector.
+
+### Speaker
+
+There is a 2P 1.25mm JST connector to connect a speaker. It’s controlled with GPIO 26.
