@@ -10,10 +10,9 @@
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
-#include "FontMetricsGFX.h"
 
 // Test test
-#define TEST_TEXT "bghjkpry"
+#define TEST_TEXT "BbGgHhJjKkPpRrYy"
 
 // Screen size
 #define SCREEN_WIDTH 320
@@ -34,36 +33,80 @@
 SPIClass tftSPI = SPIClass(HSPI);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(&tftSPI, TFT_DC, TFT_CS, TFT_RST);
 
-void TestFont(int vOffset) {
+//----------------------------------------------------------------------
+// GetGFXFontMetrics
+// -----------------
+// Function to examine a GFX font and determine the number of pixels
+// needed to display the characters.
+//----------------------------------------------------------------------
+void GetGFXFontMetrics(const GFXfont* f, int* LineDepth, int* CharDepth, int* Descender) {
+  // The line depth is the vertical space moved by \n and it's directly in the font
+  if (LineDepth)
+    *LineDepth = f->yAdvance;
+
+  // To get the character depth we need to scan all the characters
+  // Go through the character glyphs array to find the spacing and
+  // descender size;
+  int char_depth = 0, descender = 0;
+  int num_chars = f->last - f->first + 1;
+
+  for (int i = 0; i < num_chars; i++) {
+    // This is the pixels above the base
+    int depth = -f->glyph[i].yOffset;
+    if (depth > char_depth)
+      char_depth = depth;
+  
+    // This is the pixels below the base i.e. the descender size
+    int desc = f->glyph[i].height + f->glyph[i].yOffset;
+    if (desc > descender)
+      descender = desc;
+  }
+
+  // Finally add the descender size to the max offset to get the total character depth
+  char_depth += descender;
+
+  // And return the values
+  if (CharDepth)
+    *CharDepth = char_depth;
+  if (Descender)
+    *Descender = descender;
+}
+
+//----------------------------------------------------------------------
+// TestFont
+// --------
+// Fill the screen with text in the current font
+//----------------------------------------------------------------------
+void TestFont(const GFXfont* Font) {
     tft.fillScreen(COL_BACK);
 
-  // Measure the text depth
-  tft.setCursor(0, SCREEN_DEPTH/2);
-  tft.printf("%s\n", TEST_TEXT);
-  int depth = tft.getCursorY() - SCREEN_DEPTH/2;
-  Serial.printf("Depth = %d pixels\n", depth);
+  // Get the font metrics
+  int line_depth, char_depth, descender;
+  GetGFXFontMetrics(Font, &line_depth, &char_depth, &descender);
+  Serial.printf("line_depth = %d, char_depth = %d, descender = %d\n", line_depth, char_depth, descender);
 
-  // And draw a rectangle behind the text
-  tft.fillScreen(COL_BACK);
+  // Render the text with a coloured background
+  int max_lines = SCREEN_DEPTH/line_depth;
+  uint16_t cur_colour = ILI9341_BLUE;
 
-  int base = depth;
-  tft.fillRect(0, base-depth+vOffset, SCREEN_WIDTH, depth, ILI9341_RED);
-  tft.setCursor(0, base);
-  tft.printf(TEST_TEXT);
+  for (int i = 0; i < max_lines; i++) {
+    // Set the next colour
+    if (cur_colour == ILI9341_BLUE)
+      cur_colour = ILI9341_RED;
+    else if (cur_colour == ILI9341_RED)
+       cur_colour = ILI9341_GREEN;
+    else
+       cur_colour = ILI9341_BLUE;
 
-  base = depth*2;
-  tft.fillRect(0, base-depth+vOffset, SCREEN_WIDTH, depth, ILI9341_BLUE);
-  tft.setCursor(0, base);
-  tft.printf(TEST_TEXT);
+    // Erase the current line
+    int base = (i+1)*line_depth;
+    tft.fillRect(0, base-line_depth+descender, SCREEN_WIDTH, line_depth, cur_colour);
 
-  base = depth*3;
-  tft.fillRect(0, base-depth+vOffset, SCREEN_WIDTH, depth, ILI9341_GREEN);
-  tft.setCursor(0, base);
-  tft.printf(TEST_TEXT);
-
-  // And wait for user input
-  Serial.println("Press return to continue");
-  String s = Serial.readStringUntil(10);
+    // Write the current line
+    tft.setFont(Font);
+    tft.setCursor(0, base);
+    tft.printf(TEST_TEXT);
+  }
 }
 
 //----------------------------------------------------------------------
@@ -86,23 +129,27 @@ void setup() {
 
   // 9pt Sans
   Serial.println("Testing FreeSans9pt7b");
-  tft.setFont(&FreeSans9pt7b);
-  TestFont(VOFFSET_9PT);
+  TestFont(&FreeSans9pt7b);
+  Serial.println("Press enter to continue");
+  String s = Serial.readStringUntil(10);
 
   // 12pt Sans
   Serial.println("Testing FreeSans12pt7b");
-  tft.setFont(&FreeSans12pt7b);
-  TestFont(VOFFSET_12PT);
+  TestFont(&FreeSans12pt7b);
+  Serial.println("Press enter to continue");
+  Serial.readStringUntil(10);
 
   // 18pt Sans
   Serial.println("Testing FreeSans18pt7b");
-  tft.setFont(&FreeSans18pt7b);
-  TestFont(VOFFSET_18PT);
+  TestFont(&FreeSans18pt7b);
+  Serial.println("Press enter to continue");
+  Serial.readStringUntil(10);
 
   // 24pt Sans
   Serial.println("Testing FreeSans24pt7b");
-  tft.setFont(&FreeSans24pt7b);
-  TestFont(VOFFSET_24PT);
+  TestFont(&FreeSans24pt7b);
+  Serial.println("Press enter to continue");
+  Serial.readStringUntil(10);
 
 // Halt now the tests are done
   vTaskSuspend(NULL);
