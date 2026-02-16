@@ -4,11 +4,18 @@ The ESP32-2432S028R, better known as the Cheap Yellow Display has become a hobby
 
 ### Graphics libraries
 
-For graphics I usually use the TFT_eSPI library as it's available from the Arduino IDE library manager and it's easy to use. To use it install "TFT_eSPI by Bodmer" using the library manager then copy the file `User_Setup.h` into the `libraries\TFT_eSPI` directory replacing the file that is already there. Configuring the `User_Setup.h` file is the hardest part of getting TFT_eSPI working and the version I've included in this repository works for me.
+TFT_eSPI  
+There is a `User_Setup.h` file in the CYD directory. This needs to be copied into the `libraries\TFT_eSPI` directory.
 
-Some of the sketches use the Arduino GFX library instead. The Arduino library is far easier to get working as it doesn't require navigating the (complicated!) `User_Setup.h` file.
+LovyanGFX  
+There is a `LovyanGFX_CYD_Settings.h` file in the CYD directory. This needs to be copied into your sketch directory and #included in your sketch.
 
-### Arduino GFX bug
+ArduinoGFX  
+You don't need to do anything special to use this.
+
+The GraphicsLibTest sketch demonstrates how to use the three libraries. They are similar enough that you probably don't need to change your code in many cases.
+
+### Arduino GFX problem
 
 To use the Arduino GFX library you need the Adafruit ILI9341 library to drive the CYD's controller, however there seems to be issue with this on the CYD. To get it to work I had to edit the file `libraries\Adafruit_ILI9341\Adafruit_ILI9341.h` and change the screen size settings. At about line 45 (in v1.6.3 - it may change in later versions) you'll find the lines:
 
@@ -28,9 +35,6 @@ Unless you do this the display is corrupted. I tried reporting this to Adafruit 
 
 ### Sketches
 
-Adafruit  
-This is example code to show how to use the Arduino_GFX library. The Arduino library is much easier to configure than TFT_eSPI and it's about the same size. It's more basic than TFT_eSPI but works fine for simple apps.
-
 Backlight  
 This is code to show how to adjust the intensity of the backlight using LEDC.
 
@@ -46,14 +50,14 @@ This is a class using to implement a simple scrolling console on the CYD.
 FontMetricsGFX  
 This is a sketch to measure the sizes in pixels that the Arduino GFX free fonts are rendered on the CYD.
 
+GraphicsLibTest  
+This is a sketch to show how the three graphics libraries described above can be used in your code.
+
 LDR  
 This is example code to use the on board light dependent resistor.
 
 LVGL  
 This is example code to show how to use the LVGL library.
-
-TFT_eSPI  
-This is example code to show how to use the TFT_eSPI library.
 
 Touch  
 This is example code to show how to use the touch screen.
