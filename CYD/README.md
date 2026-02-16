@@ -40,8 +40,8 @@ This is example code to show how to control the on board LED.
 Clock  
 This is a sketch to make the CYD work as a digital clock using SNTP to get the time from the Internet. It requires an AHT20+BMP280 sensor to get the temperature, humidity and pressure, but it will work fine without it. You can choose either the TFT_eSPI or Arduino GFX graphics libraries.
 
-ConsoleGFX  
-This is a class using the Arduino GFX graphics to implement a simple scrolling console on the CYD.
+Console  
+This is a class using to implement a simple scrolling console on the CYD.
 
 FontMetricsGFX  
 This is a sketch to measure the sizes in pixels that the Arduino GFX free fonts are rendered on the CYD.
