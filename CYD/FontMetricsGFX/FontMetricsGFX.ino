@@ -2,6 +2,18 @@
 // FontMetricsGFX
 // ==============
 // Sketch to measure the sizes in pixels of ArduinoGFX fonts
+// The Arduino fonts are rendered at 141 dpi
+// LINE_DEPTH is the spacing between lines - ascent + descent + leading
+// CHAR_DEPTH is the ascent + descent, but no leading
+// DESCENDER is just the descent
+//
+// In the GFXglyph struct the yOffset is the number of pixels from the
+// baseline to the top of the character so this is the font ascent.
+// The descent = height - yOffset.
+// The sketch goes through all the characters in the font and finds the
+// maximum ascent and descent, and the size = ascent + descent. The line
+// depth is greater than this as it includes leading space to make the
+// text look less cramped.
 //----------------------------------------------------------------------
 #include <SPI.h>
 #include <Adafruit_GFX.h>
@@ -19,8 +31,8 @@
 #define SCREEN_DEPTH 240
 
 // Colours
-#define COL_BACK      ILI9341_BLACK
-#define COL_FORE      ILI9341_WHITE
+#define COL_BACK ILI9341_BLACK
+#define COL_FORE ILI9341_WHITE
 
 // Backlight
 #define LED_PIN 21
@@ -47,29 +59,26 @@ void GetGFXFontMetrics(const GFXfont* f, int* LineDepth, int* CharDepth, int* De
   // To get the character depth we need to scan all the characters
   // Go through the character glyphs array to find the spacing and
   // descender size;
-  int char_depth = 0, descender = 0;
+  int ascent = 0, descent = 0;
   int num_chars = f->last - f->first + 1;
 
   for (int i = 0; i < num_chars; i++) {
     // This is the pixels above the base
-    int depth = -f->glyph[i].yOffset;
-    if (depth > char_depth)
-      char_depth = depth;
+    int asc = -f->glyph[i].yOffset;
+    if (asc > ascent)
+      ascent = asc;
   
     // This is the pixels below the base i.e. the descender size
     int desc = f->glyph[i].height + f->glyph[i].yOffset;
-    if (desc > descender)
-      descender = desc;
+    if (desc > descent)
+      descent = desc;
   }
-
-  // Finally add the descender size to the max offset to get the total character depth
-  char_depth += descender;
 
   // And return the values
   if (CharDepth)
-    *CharDepth = char_depth;
+    *CharDepth = ascent + descent;
   if (Descender)
-    *Descender = descender;
+    *Descender = descent;
 }
 
 //----------------------------------------------------------------------
