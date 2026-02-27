@@ -70,6 +70,9 @@ This demonstrates how to set the time using the ESP-IDF SNTP functions
 NTPServer  
 This extends the NTPClient sketch to add an NTP server as well
 
+PingTest  
+Code to show how to send pings
+
 Photoresistor  
 Test use of a photoresistor as input
 

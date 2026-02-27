@@ -23,3 +23,5 @@ fillRect(0, getCursorY() - line_depth + descent, SCREEN_WIDTH, line_depth, BACKG
 ```
 
 I have measured the sizes for the 9pt, 12pt, 18pt and 24pt fonts included with the ArduinoGFX library, and I've put these in `FontMetricsGFX.h` so this can be included in your program. Alternatively you can use the `GetGFXFontMetrics()` function from this code to find the size of whatever font you want to use.
+
+When you run this sketch it will print the measured sizes to the serial monitor, and it will wait for you to press _Enter_ in the serial monitor before moving on to the next font.
