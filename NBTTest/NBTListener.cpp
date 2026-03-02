@@ -7,7 +7,11 @@
 // Uncomment this for extra debugging info
 // #define NBT_DEBUGGING
 
+#ifdef NBT_DEBUGGING
+// We need the Arduino code only for Serial.print
 #include <Arduino.h>
+#endif
+
 #include <stdint.h>
 #include <string.h>
 #include <lwip/sockets.h>
