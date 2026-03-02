@@ -64,6 +64,9 @@ Test MQTT using a third party class
 MQTT_IDF  
 Test MQTT using the IDF funtions
 
+NBTTest  
+App that implements Netbios name lookups on the ESP32
+
 NTPClient  
 This demonstrates how to set the time using the ESP-IDF SNTP functions
 
