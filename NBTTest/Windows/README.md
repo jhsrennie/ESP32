@@ -8,11 +8,14 @@ nbtlookup <target_name>
 
 If the host responds to the request its IP address will be printed. If you don't get a reply then try again. Responses to broadcasts can be a bit erratic.
 
-The app does the same as the built in Windows command:
+In Windows you can also do the lookup using:
 
 ```
 nbtstat -a <target_name>
+nbtstat -c
 ```
+
+The `-a` option sends a name query and the `-c` request will list the names found.
 
 # Building the app
 

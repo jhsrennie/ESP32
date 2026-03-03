@@ -23,11 +23,14 @@ then you can find your ESP32 by searching for the name _foobar_.
 If you are using Windows then you can use the built in `nbtstat` command to perform the search. For example:
 
 ```
-nbtstat -a foobar
+nbtstat -a foobar  
+nbtstat -c
 ```
 
-will send an NBT name query for the name _foobar_ and list the ip addresses found. Alternatively I have written a command line app called `nbtlookup` that does a similar search. There is a version for Windows in the `./Windows` directory and a version for Linux in the `./Linux` directory.
+The `-a` option sends an NBT name query for the name _foobar_ then `-c` lists the ip addresses found.
+
+Alternatively I have written a command line app called `nbtlookup` that does a similar search. There is a version for Windows in the `./Windows` directory and a version for Linux in the `./Linux` directory.
 
 The listener code is pretty lightweight. It adds about 2.5KB to your binary and uses negligible CPU. The listener runs as a separate task so once started it will sit in the background allowing you to get on with the important stuff.
 
-NBT name queries support both IPv4 and v6. The code here implements only the v4 queries to keep the code lightweight. Modification to support v6 would be straightforward if you needed it for your application.
+NBT name queries support both IPv4 and v6, however the code here implements only the v4 queries to keep the code as lightweight as possible.
