@@ -1,0 +1,25 @@
+Sample name query response from a Windows PC called "GNOME"
+
+12 34       // NAME_TRN_ID
+85 00       // Flags
+00 00 00 01
+00 00 00 00
+
+20          // Name length
+45 48 45    // Name ("GNOME")
+4f 45 50 45
+4e 45 46 43
+41 43 41 43
+41 43 41 43
+41 43 41 43
+41 43 41 43
+41 43 41 41
+41 00 
+
+00 20       // NB
+00 01       // IN
+00 04 93 e0 // TTL = 300,000 milliseconds
+
+00 06       // Response data length
+40 00       // NB_FLAGS. 0x40 = unique P node
+c0 a8 02 64 // IP address (192.168.2.100)

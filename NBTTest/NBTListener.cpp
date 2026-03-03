@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------
-// NBTClient.cpp
-// =============
+// NBTListener.cpp
+// ===============
 // Code to listen for and respond to NBT name requests
 //----------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ static unsigned char reply_template[] = {
   0x00, 0x00, 0x00, 0x00,
 
   0x20, // RR_NAME length
-  0x00, 0x00, 0x00, 0x00, //RR_NAME encoded
+  0x00, 0x00, 0x00, 0x00, // RR_NAME encoded
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
@@ -62,7 +62,7 @@ static unsigned char reply_template[] = {
 
   0x00, 0x20, // NB
   0x00, 0x01, // IN
-  0x00, 0x04, 0x93, 0xe0, // TTL
+  0x00, 0x04, 0x93, 0xe0, // TTL = 300,000 milliseconds
   0x00, 0x06, // RDLENGTH
   0x40, 0x00, // NB_FLAGS. 0x40 = unique P node
   0x00, 0x00, 0x00, 0x00 // iP address in network byte ordrer
