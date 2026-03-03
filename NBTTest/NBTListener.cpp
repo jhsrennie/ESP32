@@ -236,7 +236,7 @@ int StartNBTListener(const char* Name, const char* v4IPAddr) {
   );
 
   // Wait a moment to let the task start
-  delay(1000);
+  vTaskDelay(pdMS_TO_TICKS(1000));
 
   // Return the error code from the task
   return details.nbterr;
