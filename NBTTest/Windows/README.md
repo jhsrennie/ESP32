@@ -11,11 +11,10 @@ If the host responds to the request its IP address will be printed. If you don't
 In Windows you can also do the lookup using:
 
 ```
-nbtstat -a <target_name>
-nbtstat -c
+ping <target_name>
 ```
 
-The `-a` option sends a name query and the `-c` request will list the names found.
+as Windows falls back to NBT name queries if DNS fails.
 
 # Building the app
 

@@ -20,16 +20,18 @@ int e = StartNBTListener("foobar", WiFi.localIP().toString().c_str());
 
 then you can find your ESP32 by searching for the name _foobar_.
 
-If you are using Windows then you can use the built in `nbtstat` command to perform the search. For example:
+If you are using Windows this is straightforward because Windows falls back to a NBT query if DNS fails. You can just type:
 
 ```
-nbtstat -a foobar  
-nbtstat -c
+ping foobar
 ```
 
-The `-a` option sends an NBT name query for the name _foobar_ then `-c` lists the ip addresses found.
+and it will work. But this will not work on Linux or OSX as they do not use NBT as a fallback, so for those I have written an app called `nbtlookup` to do this. There are Windows and Linux versions in the _Windows_ and _Linux_ directories, and you can use:
+```
+nbtlookup foobar
+```
 
-Alternatively I have written a command line app called `nbtlookup` that does a similar search. There is a version for Windows in the `./Windows` directory and a version for Linux in the `./Linux` directory.
+to find the address.
 
 The listener code is pretty lightweight. It adds about 2.5KB to your binary and uses negligible CPU. The listener runs as a separate task so once started it will sit in the background allowing you to get on with the important stuff.
 
