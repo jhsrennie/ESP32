@@ -1,4 +1,4 @@
-/* 
+/*
   Rui Santos & Sara Santos - Random Nerd Tutorials
 
   Install the "TFT_eSPI" lbirary by Bodmer to interface with the TFT Display - https://github.com/Bodmer/TFT_eSPI
@@ -123,9 +123,8 @@
 // If colours are inverted (white shows as black) then uncomment one of the next
 // 2 lines try both options, one of the options should correct the inversion.
 
-// #define TFT_INVERSION_ON
+#define TFT_INVERSION_ON
 // #define TFT_INVERSION_OFF
-
 
 // ##################################################################################
 //
