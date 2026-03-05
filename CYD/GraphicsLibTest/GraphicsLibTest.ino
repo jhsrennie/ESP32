@@ -74,11 +74,6 @@ void setup() {
   tft.init();
 #endif
 
-  // With TFT_eSPI the colours are inverted
-#ifdef _USE_TFT_ESPI
-  tft.invertDisplay(true);
-#endif
-
   // This is the display in landscape with the USB port on the left
 #ifdef _USE_TFT_ESPI
   tft.setRotation(3);

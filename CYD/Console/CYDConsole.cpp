@@ -110,7 +110,6 @@ void CYDConsole::init() {
   // Initialise the display
 #ifdef UseTFT_eSPI
   tft.init();
-  tft.invertDisplay(true);
   tft.setRotation(3);
 #else
   tft.begin();
