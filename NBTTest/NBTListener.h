@@ -11,8 +11,8 @@
 //----------------------------------------------------------------------
 // Maximum length of a Netbios name
 #define LEN_NETBIOSNAME 15
-// Maximum length of a v4 IP address aaa.bbb.ccc.ddd = 15 chars
-#define LEN_IPADDRESS 15
+// Maximum length of a v4 IP address aaa.bbb.ccc.ddd\0 = 16 chars
+#define LEN_IPADDRESS 16
 
 // Errors
 #define NBT_ERR_OK        0 // success
