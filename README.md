@@ -58,6 +58,9 @@ WiFi class.
 libraries/SoftAP  
 Code to implement a WiFi access point.
 
+mDNSTest  
+App that implements mDNS name lookups on the ESP32
+
 MQTT  
 Test MQTT using a third party class
 

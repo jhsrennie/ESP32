@@ -1,0 +1,34 @@
+Example response for gramrat.local
+
+00 00 84 00
+00 00 00 01
+00 00 00 00
+
+07 67 72 61
+6d 72 61 74
+05 6c 6f 63
+61 6c 00 
+
+00 01 00 01 
+
+00 00 00 3c 
+00 04 
+c0 a8 02 65
+
+
+Example response for ratzen.local
+Received 40 bytes
+00 00 84 00 
+00 00 00 01 
+00 00 00 00 
+
+06 72 61 74 
+7a 65 6e 05 
+6c 6f 63 61 
+6c 00 
+
+00 01 00 01 
+
+00 00 00 3c 
+00 04 
+c0 a8 02 66 
