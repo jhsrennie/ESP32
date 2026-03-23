@@ -50,6 +50,9 @@ This is a class using to implement a simple scrolling console on the CYD.
 FontMetricsGFX  
 This is a sketch to measure the sizes in pixels that the Arduino GFX free fonts are rendered on the CYD.
 
+IDF-LCDTest  
+Demonstrates the (not very useful) ESP-IDF LCD support
+
 GraphicsLibTest  
 This is a sketch to show how the three graphics libraries described above can be used in your code.
 
