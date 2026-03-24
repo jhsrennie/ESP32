@@ -63,7 +63,10 @@ LDR
 This is example code to use the on board light dependent resistor.
 
 LVGL  
-This is example code to show how to use the LVGL library.
+This is example code to show how to use the LVGL library using TFT_eSPI to do the rendering.
+
+LVGL-IDF  
+This is example code to show how to use the LVGL library using the Espressif LCD API to do the rendering.
 
 Touch  
 This is example code to show how to use the touch screen.
