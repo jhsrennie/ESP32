@@ -9,3 +9,13 @@ The clock gets its time from the Internet using SNTP. My code also uses an AHT20
 The clock fades the display after 20s to save power. Touching the screen will bring the brightness back up to maximum.
 
 You can use either TFT_eSPI or the Adafruit GFX library as you prefer. If you're using the Adafruit library see the note on the screen issue with the CYD in CYD/README.md.
+
+You can set the Wi-Fi credentials by editing `utils.cpp` or you can set them from the serial monitor by typing the commands:
+
+```
+ssid yourssidhere
+password yourpwdhere
+reboot
+```
+
+The credentials are stored in NVS so once you have set them they don't need to be changed again unless you move to a different wireless network.

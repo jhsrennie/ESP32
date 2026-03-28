@@ -14,6 +14,7 @@
 #include <driver/ledc.h>
 #include <time.h>
 #include <XPT2046_Touchscreen.h>
+#include "clock.h"
 
 // Choose the graphics library
 #ifdef UseTFT_eSPI
@@ -51,10 +52,10 @@ Adafruit_AHTX0 aht;
 Adafruit_BMP280 bmp;
 bool aht_init = true, bmp_init = true;
 float Temperature = 0, Humidity = 0, Pressure = 0;
-
-// WiFi credentials
-#define WIFI_SSID "MYSSID"
-#define WIFI_PWD  "MYPASS"
+// If necessary you can use a correction factor to adjust your sensor to
+// match the actual pressure readings, but usually the BMP280 is pretty
+// accurate and you can just leave this at 100.
+float PressureCorrection = 100.0;
 
 // NTP server details
 #define TIMEZONE  "GMT0BST,M3.5.0/1,M10.5.0"
@@ -159,9 +160,12 @@ void UpdateTime(void* Unused) {
     DisplayStatus("Connecting to WiFi ...");
     WiFi.mode(WIFI_STA);
     WiFi.setSleep(WIFI_PS_NONE);
-    WiFi.begin(WIFI_SSID, WIFI_PWD);
+
+    const char* wifi_ssid = GetSSID();
+    const char* wifi_pass = GetPassword();
+    WiFi.begin(wifi_ssid, wifi_pass);
     int loopcnt = 0;
-    Serial.println("Connecting to WiFi ...");
+    Serial.printf("Connecting to WiFi %s ...", wifi_ssid);
     while (WiFi.status() != WL_CONNECTED) {
       Serial.printf("Connecting: time %d, WiFi status = %d, signal = %d\n", loopcnt++, WiFi.status(), WiFi.RSSI());
       delay(1000);
@@ -268,7 +272,7 @@ void GetTemp() {
     float bmp_pressure = bmp.readPressure(); // Pressure is in Pa
     Serial.printf("Temp: %f, pressure: %f\n", bmp_temp, bmp_pressure);
 
-    Pressure = bmp_pressure;
+    Pressure = bmp_pressure/PressureCorrection;
   }
 }
 
@@ -394,7 +398,9 @@ void DisplayTemp() {
     tft.setCursor(HUMID_LEFT, HUMID_BASE);
     tft.print("Press");
     tft.setCursor(HUMID_LEFT+HUMID_SPACE, HUMID_BASE);
-    tft.printf("%d", (int) (Pressure/101.325));
+    // Is the preesure in Pascals or 10^5 atm?
+    // tft.printf("%d", (int) (Pressure/101.325));
+    tft.printf("%d", (int) (Pressure));
   }
 }
 
@@ -498,5 +504,10 @@ void loop() {
   }
   tempcount = (tempcount + 1) % 600;
 
+  // Check if there's any serial input to process
+  if (Serial.available() > 0)
+    ProcessSerial();
+
+  // All done for now
   delay(100);
 }
