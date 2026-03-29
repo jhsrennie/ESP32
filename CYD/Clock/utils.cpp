@@ -192,6 +192,14 @@ void ProcessCommand() {
     SetPassword(token[1]);
   }
 
+  // Unknown command
+  else {
+    Serial.printf("Unknown command: %s", token[0]);
+    for (int i = 1; i < num_tokens; i++)
+      Serial.printf(" %s", token[i]);
+    Serial.println("");
+  }
+
   // Reset the tokens
   num_tokens = 0;  
 }
@@ -225,6 +233,10 @@ void ProcessInput() {
     // Terminate the token
     if (*p != '\0')
       *p = '\0';
+  
+    // Check the number of tokens
+    if (num_tokens >= MAX_TOKENS)
+      break;
   }
 
   // Process the command

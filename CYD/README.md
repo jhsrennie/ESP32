@@ -2,6 +2,8 @@
 
 The ESP32-2432S028R, better known as the Cheap Yellow Display has become a hobbyist favourite because it has a touchscreen display built in and ... well ... it's cheap! This directory has a collection of programs I have used for experimenting with a CYD.
 
+With the possible exception of the _Clock_ app this repository doesn't contain fully polished programs. The aim of the sketches here is to provide example code to demonstrate how various features of the CYD can be used. It is only likely to be useful if you are writing code for the CYD.
+
 ### Graphics libraries
 
 TFT_eSPI  
