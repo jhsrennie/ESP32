@@ -14,7 +14,7 @@ void setup() {
   Serial.println("Starting Clock");
 
   // Initialise the display
-  DisplayStatus("Initialising the display ...");
+  Serial.println("Initialising the display ...");
   InitDisplay();
 
   // Start the task to get the time
