@@ -141,7 +141,7 @@ void ClearScreen() {
 void setup() {
   Serial.begin(115200);
   delay(2000);
-  Serial.println("ILI9341 started");
+  Serial.println("ILI9341 starting");
 
   // Create the screen buffer
   ScrBuf = (uint16_t*) heap_caps_malloc(BUF_LEN*sizeof(uint16_t), MALLOC_CAP_DMA);
@@ -161,36 +161,22 @@ void setup() {
   // Clear the screen
   ClearScreen();
 
-  // Create red, green and blue blocks in the screen buffer
-#define BLK_LEN (24*32)
-  uint16_t* red     = ScrBuf;
-  uint16_t* yellow  = ScrBuf + BLK_LEN;
-  uint16_t* green   = ScrBuf + 2*BLK_LEN;
-  uint16_t* cyan    = ScrBuf + 3*BLK_LEN;
-  uint16_t* blue    = ScrBuf + 4*BLK_LEN;
-  uint16_t* magenta = ScrBuf + 5*BLK_LEN;
-  for (int i = 0; i < BLK_LEN; i++) {
-    red[i]     = RGBCol(255,0,0);
-    yellow[i]  = RGBCol(255,255,0);
-    green[i]   = RGBCol(0,255,0);
-    cyan[i]    = RGBCol(0,255,255);
-    blue[i]    = RGBCol(0,0,255);
-    magenta[i] = RGBCol(255,0,255);
-  }
-  // Blit the blocks to the screen
-  panel_ili9341_draw_bitmap(ScrPanel,   0,   0,  32,  24, red);
-  panel_ili9341_draw_bitmap(ScrPanel,  32,  24,  64,  48, yellow);
-  panel_ili9341_draw_bitmap(ScrPanel,  64,  48,  96,  72, green);
-  panel_ili9341_draw_bitmap(ScrPanel,  96,  72, 128,  96, cyan);
-  panel_ili9341_draw_bitmap(ScrPanel, 128,  96, 160, 120, blue);
-  panel_ili9341_draw_bitmap(ScrPanel, 160, 120, 192, 144, magenta);
-
   // All done
-  Serial.println("ILI9341 completed");
-  vTaskSuspend(NULL);
+  Serial.println("ILI9341 started");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Fill the buffer with a random colour
+#define BLK_LEN (24*32)
+  uint16_t colour = (uint16_t) (rand() % 0x10000);
+  for (int i = 0; i < BLK_LEN; i++)
+    ScrBuf[i] = colour;
 
+  // Choose a random point on the screen
+  int x = (rand() % 10)*32;
+  int y = (rand() % 10)*24;
+ 
+  // And blit the colour to the display
+  panel_ili9341_draw_bitmap(ScrPanel,  x,  y, x+32, y+24, ScrBuf);
+  delay(10);
 }

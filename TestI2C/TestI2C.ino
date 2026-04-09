@@ -1,9 +1,12 @@
 #include <Wire.h>
- 
+
+#define SDA 22
+#define SCL 27
+
 void setup() {
-  Wire.begin();
+  Wire.begin(SDA, SCL);
   Serial.begin(115200);
-  Serial.println("\nI2C Scanner");
+  Serial.println("I2C Scanner");
 }
 
 bool ScanI2C(byte Address) {
@@ -13,9 +16,14 @@ bool ScanI2C(byte Address) {
 }
  
 void loop() {
-  if (ScanI2C(0x29))
-    Serial.println("Found device at address 0x29");
-  else
-    Serial.println("No device found at address 0x29");
+  Serial.println("Scanning now ...");
+
+  for (int id = 0x08; id <= 0x77; id++) {
+    if (ScanI2C(id))
+      Serial.printf("Found device at address 0x%02x\n", id);
+  }
+
+  Serial.println("Scan completed");
+
   delay(5000);          
 }
