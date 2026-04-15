@@ -4,6 +4,9 @@ This is a collection of ESP32 sketches that I written. Mostly they were just wri
 
 They were all written on a WROOM but they should run on most ESP32s. Note however that some, like the C3, do not have a DAC built in so the sketches that use DACs won't work. All code uses the Arduino interface not the IDF.
 
+AD8232  
+Code to test the AD8232 ECG board
+
 ADC-DMA  
 Code to test continuous A to D input. Also demonstrates use of the cosine generator.
 
@@ -117,6 +120,9 @@ Test code to demonstrate how to write a simple HTTP server.
 
 WebSock  
 Test code to demonstrate how to use web sockets.
+
+WiFiCounters  
+This demonstrates the use of some undocumented Wi-Fi variables
 
 WiFiEvents  
 This demonstrates how to use a wifi event handle with the Arduino IDE.
