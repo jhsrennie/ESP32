@@ -52,23 +52,17 @@ This is a class using to implement a simple scrolling console on the CYD.
 FontMetricsGFX  
 This is a sketch to measure the sizes in pixels that the Arduino GFX free fonts are rendered on the CYD.
 
-IDF-LCDTest  
-Demonstrates the (not very useful) ESP-IDF LCD support for the CYD's ILI9341 controller
-
-ILI9341-Driver  
-Demonstrates how to use the CYD's ILI9341 controller without an external library
-
 GraphicsLibTest  
 This is a sketch to show how the three graphics libraries described above can be used in your code.
+
+LCD  
+This directory contains a couple of sketches showing how to drive the CYD's display directly i.e. without using an external library.
 
 LDR  
 This is example code to use the on board light dependent resistor.
 
 LVGL  
-This is example code to show how to use the LVGL library using TFT_eSPI to do the rendering.
-
-LVGL-IDF  
-This is example code to show how to use the LVGL library using the Espressif LCD API to do the rendering.
+This directory contains some sketches showing various ways to use the LVGL library on the CYD.
 
 Touch  
 This is example code to show how to use the touch screen.

@@ -30,11 +30,12 @@ Blue LED  GPIO 17
 Important: The RGB LEDs work with inverted logic, because they are active low. This means that if you set them to HIGH = OFF and LOW = ON.
 
 ### MicroSD Card Pins
-
+```
 MISO      GPIO 19
 MOSI      GPIO 23
 SCK       GPIO 18
 CS        GPIO 5
+```
 
 ### Light Dependent Resistor
 
