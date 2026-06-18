@@ -40,6 +40,9 @@ Test using the ESP32 deep sleep function with wake by a GPIO pin - C3 version
 ESP-NOW  
 Demonstrate communication between ESP32s using the ESP-NOW protocol.
 
+esp_new_jpeg  
+Convert the Espressif ESP_NEW_JPEG to an Arduino library
+
 ESPScope  
 Oscilloscope sketch. Displays output through a web page.
 
