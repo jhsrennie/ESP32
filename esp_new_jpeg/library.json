@@ -1,0 +1,17 @@
+{
+  "name": "esp_new_jpeg",
+  "version": "1.0.0",
+  "keywords": "jpeg, jpg, ESP32",
+  "description": "A JPEG encoder library",
+  "authors":
+  [
+    {
+        "name": "Foo",
+        "email": "foo@bar.net",
+        "maintainer": true
+    }
+  ],
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "headers": "esp_jpeg_enc.h"
+}
