@@ -3,7 +3,7 @@
 ```
 MISO      GPIO 12
 MOSI      GPIO 13
-SCKL      GPIO 14
+SCLK      GPIO 14
 CS        GPIO 15
 DC        GPIO  2
 Backlight GPIO 21
