@@ -10,9 +10,9 @@
 // ---------------------------------------------------------------------
 
 // Choose the library you want to use here
-#define _USE_TFT_ESPI
+// #define _USE_TFT_ESPI
 // #define _USE_LOVYAN
-// #define _USE_ARDUINO
+#define _USE_ARDUINO
 
 #ifdef _USE_TFT_ESPI
 #include <TFT_eSPI.h>
@@ -41,11 +41,17 @@ LGFX tft;
 #define TFT_YELLOW ILI9341_YELLOW
 #define TFT_MAGENTA ILI9341_MAGENTA
 
-#define TFT_CS   15 
-#define TFT_DC    2
-#define TFT_RST  -1
-SPIClass tftSPI = SPIClass(HSPI);
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&tftSPI, TFT_DC, TFT_CS, TFT_RST);
+// For the Arduino the pins are defined in the code not in a config file
+#define PIN_MISO      12
+#define PIN_MOSI      13
+#define PIN_SCK       14
+#define PIN_DC         2
+#define PIN_CS        15
+#define PIN_RST       -1
+#define PIN_BACKLIGHT 21
+
+// Create the display object
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, PIN_DC, PIN_CS, PIN_RST);
 
 #else
 #error Unknown board type
@@ -64,12 +70,19 @@ void setup() {
   delay(2000);
   Serial.printf("Starting test of the %s graphics library\n", _LIB_NAME);
 
-  // Start the tft display and set it to black
+  // If we are using Arduino GFX we have some extra stuff to do
 #ifdef _USE_ARDUINO
-  tft.begin();
   // For the Arduino we need to turn the screen on manually
-  pinMode(21, OUTPUT);
-  digitalWrite(21, HIGH);
+  pinMode(PIN_BACKLIGHT, OUTPUT);
+  digitalWrite(PIN_BACKLIGHT, HIGH);
+
+  // Configure the SPI bus to use our selected pins
+  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS);
+
+  // The Arduino init function is begin()
+  tft.begin();
+
+  // For the TFT_eSPI and Lovyan libraries we only need to call init()
 #else
   tft.init();
 #endif
