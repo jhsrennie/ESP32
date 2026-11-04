@@ -37,6 +37,9 @@ Unless you do this the display is corrupted. I tried reporting this to Adafruit 
 
 ### Sketches
 
+Arduino_GFX  
+This is a very simple sketch showing how to get started with the Arduino_GFX graphics library. This is intended as a base for you to start from when developing a graphics app.
+
 Backlight  
 This is code to show how to adjust the intensity of the backlight using LEDC.
 

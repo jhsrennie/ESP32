@@ -37,6 +37,9 @@ Test using the ESP32 deep sleep function with wake by a GPIO pin
 DeepSleepGPIOC3  
 Test using the ESP32 deep sleep function with wake by a GPIO pin - C3 version
 
+Display  
+Collection of sketches showing how to use various display controllers
+
 ESP-NOW  
 Demonstrate communication between ESP32s using the ESP-NOW protocol.
 
