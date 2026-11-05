@@ -16,11 +16,14 @@ void flush_cb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map);
 
 Often the TFT_eSPI library is used to provide the `flush_cb()` function, but you can use the LCD functions built into the ESP-IDF or you can write your own driver to control the display directly. The subdirectories provide examples of these three approaches. In fact it turns out that using TFT_eSPI is only a small overhead and it's certainly the simplest option.
 
-TFT_eSPI  
-Shows how to use LVGL with the TFT_eSPI library
+Driver  
+Shows how to write your own display driver.
 
 ESP-IDF  
-Shows how to use the ESP-IDF LCD functions
+Shows how to use the ESP-IDF LCD functions for the display driver.
 
-Driver  
-Shows how to use your own driver
+LVGLText  
+This is a very simple example of how to use TFT_eSPI or LovyanGFX as the display driver.
+
+TFT_eSPI  
+A more complex example of using the TFT_eSPI library as the display driver.
