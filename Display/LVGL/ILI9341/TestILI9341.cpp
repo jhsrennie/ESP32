@@ -14,22 +14,22 @@ void lcd_send_cmd(spi_device_handle_t spiHandle, const uint8_t* cmd, size_t cmd_
 #define SCREEN_HEIGHT 320
 
 // CYD pins
-#define PIN_MISO      12
-#define PIN_MOSI      13
-#define PIN_SCK       14
-#define PIN_DC         2
-#define PIN_CS        15
-#define PIN_RST       -1
-#define PIN_BCKL      21
+// #define PIN_MISO      12
+// #define PIN_MOSI      13
+// #define PIN_SCK       14
+// #define PIN_DC         2
+// #define PIN_CS        15
+// #define PIN_RST       -1
+// #define PIN_BCKL      21
 
 // Bare ILI9341 pins
-// #define PIN_MISO      15
-// #define PIN_MOSI      16
-// #define PIN_SCK        4
-// #define PIN_DC        17
-// #define PIN_CS        18
-// #define PIN_RST        5
-// #define PIN_BCKL       2
+#define PIN_MISO      15
+#define PIN_MOSI      16
+#define PIN_SCK        4
+#define PIN_DC        17
+#define PIN_CS        18
+#define PIN_RST        5
+#define PIN_BCKL       2
 
 // The buffer used for display data
 // Typically this is 10% of the screen area with 2 bytes per pixel

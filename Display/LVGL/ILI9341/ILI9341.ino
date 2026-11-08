@@ -15,13 +15,22 @@ void TestILI9341(spi_device_handle_t spi);
 #define SCREEN_HEIGHT 320
 
 // CYD pins
-#define PIN_MISO      12
-#define PIN_MOSI      13
-#define PIN_SCK       14
-#define PIN_DC         2
-#define PIN_CS        15
-#define PIN_RST       -1 // The CYD board doesn't have a reset pin
-#define PIN_BCKL      21
+// #define PIN_MISO      12
+// #define PIN_MOSI      13
+// #define PIN_SCK       14
+// #define PIN_DC         2
+// #define PIN_CS        15
+// #define PIN_RST       -1 // The CYD board doesn't have a reset pin
+// #define PIN_BCKL      21
+
+// Bare ILI9341 pins
+#define PIN_MISO      15
+#define PIN_MOSI      16
+#define PIN_SCK        4
+#define PIN_DC        17
+#define PIN_CS        18
+#define PIN_RST        5
+#define PIN_BCKL       2
 
 // Use the HSPI bus for the display
 #define LCD_HOST SPI2_HOST
