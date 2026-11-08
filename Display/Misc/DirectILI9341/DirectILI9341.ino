@@ -10,22 +10,22 @@
 
 // This code was tested with a cheap yellow display (CYD) board.
 // These are the pins the CYD uses for the display.
-// #define PIN_MISO   12
-// #define PIN_MOSI   13
-// #define PIN_CLK    14
-// #define PIN_CS     15
-// #define PIN_DC      2
-// #define PIN_RST    -1
-// #define PIN_BCKL   21
+#define PIN_MISO   12
+#define PIN_MOSI   13
+#define PIN_SCLK   14
+#define PIN_CS     15
+#define PIN_DC      2
+#define PIN_RST    -1
+#define PIN_BCKL   21
 
 // Bare ILI9341 pins
-#define PIN_MISO      15
-#define PIN_MOSI      16
-#define PIN_SCLK       4
-#define PIN_DC        17
-#define PIN_CS        18
-#define PIN_RST        5
-#define PIN_BCKL       2
+// #define PIN_MISO      15
+// #define PIN_MOSI      16
+// #define PIN_SCLK       4
+// #define PIN_DC        17
+// #define PIN_CS        18
+// #define PIN_RST        5
+// #define PIN_BCKL       2
 
 // The CYD uses the HSPI bus for the display
 #define LCD_HOST SPI2_HOST
@@ -169,8 +169,7 @@ spi_device_handle_t spi_init() {
 //----------------------------------------------------------------------
 void lcd_init(spi_device_handle_t spi) {
   // Reset the screen
-  if (PIN_RST != -1)
-  {
+  if (PIN_RST != -1) {
     gpio_set_level((gpio_num_t) PIN_RST, 0);
     vTaskDelay(pdMS_TO_TICKS(100));
     gpio_set_level((gpio_num_t) PIN_RST, 1);
@@ -180,23 +179,24 @@ void lcd_init(spi_device_handle_t spi) {
   // Turn on backlight
   gpio_set_level((gpio_num_t) PIN_BCKL, 1);
 
-  // Send Driver Initialization Sequence
+  // Reset: wait 5ms if sleep mode is off, 120ms if sleep mode is on
   lcd_send_cmd(spi, &CMD_SWRESET, 1, NULL, 0);
-  vTaskDelay(pdMS_TO_TICKS(150));
-  lcd_send_cmd(spi, &CMD_SLPOUT, 1, NULL, 0);
-  vTaskDelay(pdMS_TO_TICKS(150));
+  vTaskDelay(pdMS_TO_TICKS(120));
 
-  // Interface Pixel Format: 16 bits/pixel (RGB565)
+  // Turn off sleep mode: wait 5ms if sleep mode is off, 120ms if sleep mode is on
+  lcd_send_cmd(spi, &CMD_SLPOUT, 1, NULL, 0);
+  vTaskDelay(pdMS_TO_TICKS(120));
+
+  // Color mode: 16-bit color (RGB565): no wait needed
   uint8_t colmod_data = 0x55;
   lcd_send_cmd(spi, &CMD_COLMOD, 1, &colmod_data, 1);
 
-  // Memory Access Control: Default standard orientation rotation layout
-  uint8_t madctl_data = 0x08;
+  // Memory Access Control: no wait needed
+  uint8_t madctl_data = 0x00;
   lcd_send_cmd(spi, &CMD_MADCTL, 1, &madctl_data, 1);
 
-  // Turn Display On
+  // Display on: no wait needed
   lcd_send_cmd(spi, &CMD_DISPON, 1, NULL, 0);
-  vTaskDelay(pdMS_TO_TICKS(100));
 }
 
 //----------------------------------------------------------------------
@@ -227,16 +227,7 @@ void lcd_set_window(spi_device_handle_t spi, uint16_t x1, uint16_t y1, uint16_t 
 //----------------------------------------------------------------------
 void lcd_fill(spi_device_handle_t spi, uint16_t col) {
   // Set the window to the whole screen
-  uint8_t data[4];
-
-  data[0] = data[1] = 0;
-  data[2] = ((SCREEN_WIDTH-1) >> 8) & 0xFF;
-  data[3] = (SCREEN_WIDTH-1) & 0xFF;
-  lcd_send_cmd(spi, &CMD_CASET, 1, data, 4);
-
-  data[2] = ((SCREEN_HEIGHT-1) >> 8) & 0xFF;
-  data[3] = (SCREEN_HEIGHT-1) & 0xFF;
-  lcd_send_cmd(spi, &CMD_PASET, 1, data, 4);
+  lcd_set_window(spi, 0, 0, SCREEN_WIDTH-1, SCREEN_HEIGHT-1);
 
   // Solid red in RGB565 format: 11111 (R) 000000 (G) 00000 (B) -> 0xF800
   // Big-endian conversion for presentation on parallel bus stream:
