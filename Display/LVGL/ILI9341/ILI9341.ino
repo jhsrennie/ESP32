@@ -7,23 +7,21 @@
 #include <lvgl.h>
 #include <driver/spi_master.h>
 
+// Prototype for test function
+void TestILI9341(spi_device_handle_t spi);
+
 // Screen size
 #define SCREEN_WIDTH  240
 #define SCREEN_HEIGHT 320
 
-// Buffer used by LVGL
-#define DRAW_BUF_SIZE ((LV_COLOR_DEPTH/8)*SCREEN_WIDTH*SCREEN_HEIGHT/10)
-uint8_t* drawBuf = NULL;
-
-// If we are not using the TFT_eSPI or Lovyan drivers we need to
-// configure the SPI bus
+// CYD pins
 #define PIN_MISO      12
 #define PIN_MOSI      13
 #define PIN_SCK       14
 #define PIN_DC         2
 #define PIN_CS        15
-#define PIN_RST       -1
-#define PIN_BACKLIGHT 21
+#define PIN_RST       -1 // The CYD board doesn't have a reset pin
+#define PIN_BCKL      21
 
 // Use the HSPI bus for the display
 #define LCD_HOST SPI2_HOST
@@ -31,17 +29,24 @@ uint8_t* drawBuf = NULL;
 // SPI handle for the display
 spi_device_handle_t spiHandle;
 
+// The buffer used for display data
+// Typically this is 10% of the screen area with 2 bytes per pixel
+#define DRAW_BUF_LINES  (SCREEN_HEIGHT/10)
+#define DRAW_BUF_PIXELS (SCREEN_WIDTH*DRAW_BUF_LINES)
+#define DRAW_BUF_SIZE   (2*DRAW_BUF_PIXELS)
+uint8_t* drawBuf = NULL;
+
 // LVGL text area
 static lv_obj_t* txt;
 
 //----------------------------------------------------------------------
-// lcd_spi_pre_transfer_callback
-// -----------------------------
+// spi_pre_transfer_callback
+// -------------------------
 // This called whenever we do an SPI transaction. It sets the DC pin to
 // the value set in the spi_transaction_t.user field.
 // We use this to set DC low for a command and high for data.
 //----------------------------------------------------------------------
-void lcd_spi_pre_transfer_callback(spi_transaction_t *t) {
+void spi_pre_transfer_callback(spi_transaction_t *t) {
   int dc = (int) t->user;
   gpio_set_level((gpio_num_t) PIN_DC, dc);
 }
@@ -54,7 +59,10 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t) {
 bool InitSPI() {
   // Configure the GPIOs we need
   gpio_config_t io_conf = {0};
-  io_conf.pin_bit_mask = ((1ULL << PIN_DC) | (1ULL << PIN_BACKLIGHT));
+  if (PIN_RST == -1) // Not all boards have a reset pin
+    io_conf.pin_bit_mask = ((1ULL << PIN_DC) | (1ULL << PIN_BCKL));
+  else
+    io_conf.pin_bit_mask = ((1ULL << PIN_DC) | (1ULL << PIN_BCKL) | (1ULL << PIN_RST));
   io_conf.mode         = GPIO_MODE_OUTPUT;
   io_conf.pull_up_en   = GPIO_PULLUP_DISABLE;
   io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
@@ -83,7 +91,7 @@ bool InitSPI() {
   devcfg.mode           = 0;        // SPI mode 0
   devcfg.spics_io_num   = PIN_CS;   // CS GPIO pin
   devcfg.queue_size     = 7;        // Queue transaction limit
-  devcfg.pre_cb         = lcd_spi_pre_transfer_callback; // Auto-handle D/C pin toggling
+  devcfg.pre_cb         = spi_pre_transfer_callback; // Auto-handle D/C pin toggling
   e = spi_bus_add_device(LCD_HOST, &devcfg, &spiHandle);
   if (e != ESP_OK) {
     Serial.printf("spi_bus_add_device() returned %d\n", e);
@@ -103,21 +111,21 @@ bool InitSPI() {
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
-// my_lcd_send_cmd
-// ---------------
-// Send short command to the LCD. This function shall wait until the
-// transaction finishes.
+// lcd_send_cmd
+// ------------
+// Send a command to the LCD
 //----------------------------------------------------------------------
-void my_lcd_send_cmd(lv_display_t *disp, const uint8_t* cmd, size_t cmd_size, const uint8_t* param, size_t param_size) {
+void lcd_send_cmd(spi_device_handle_t spiHandle, const uint8_t* cmd, size_t cmd_size, const uint8_t* param, size_t param_size) {
   // Send the command byte
   if (cmd && cmd_size > 0) {
     spi_transaction_t t = {0};
     t.length    = cmd_size*8; // Length in bits
     t.tx_buffer = cmd;        // Data to send
     t.user      = (void*) 0;  // D/C line LOW for a command
-    esp_err_t e = spi_device_polling_transmit(spiHandle, &t);
+    // esp_err_t e = spi_device_polling_transmit(spiHandle, &t);
+    esp_err_t e = spi_device_transmit(spiHandle, &t);
     if (e != ESP_OK) {
-      Serial.printf("Command spi_device_polling_transmit() returned %d\n", e);
+      Serial.printf("Command transmit returned %d\n", e);
       return;
     }
   }
@@ -128,12 +136,23 @@ void my_lcd_send_cmd(lv_display_t *disp, const uint8_t* cmd, size_t cmd_size, co
     t.length    = param_size*8; // Length in bits
     t.tx_buffer = param;        // Data to send
     t.user = (void*) 1;         // D/C line HIGH for data
-    esp_err_t e = spi_device_polling_transmit(spiHandle, &t);
+    // esp_err_t e = spi_device_polling_transmit(spiHandle, &t);
+    esp_err_t e = spi_device_transmit(spiHandle, &t);
     if (e != ESP_OK) {
-      Serial.printf("Parameter spi_device_polling_transmit() returned %d\n", e);
+      Serial.printf("Parameter transmit returned %d\n", e);
       return;
     }
   }
+}
+
+//----------------------------------------------------------------------
+// my_lcd_send_cmd
+// ---------------
+// Send short command to the LCD. This function shall wait until the
+// transaction finishes.
+//----------------------------------------------------------------------
+void my_lcd_send_cmd(lv_display_t *disp, const uint8_t* cmd, size_t cmd_size, const uint8_t* param, size_t param_size) {
+  lcd_send_cmd(spiHandle, cmd, cmd_size, param, param_size);
 }
 
 //----------------------------------------------------------------------
@@ -142,10 +161,10 @@ void my_lcd_send_cmd(lv_display_t *disp, const uint8_t* cmd, size_t cmd_size, co
 // Send large array of pixel data to the LCD. If necessary, this
 // function has to do the byte-swapping.
 // LVL recommends this send the data asynchronously as this improves
-// performance. For testing I'm just using the my_lcd_send_cmd function.
+// performance. For testing I'm just using the lcd_send_cmd function.
 //----------------------------------------------------------------------
 void my_lcd_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, uint8_t *param, size_t param_size) {
-  my_lcd_send_cmd(disp, cmd, cmd_size, param, param_size);
+  lcd_send_cmd(spiHandle, cmd, cmd_size, param, param_size);
 }
 
 //----------------------------------------------------------------------
@@ -211,6 +230,12 @@ void setup() {
   InitSPI();
   Serial.println("SPI bus initialised");
 
+  // Test the screen to make sure all the SPI stuff is working
+  gpio_set_level((gpio_num_t) PIN_BCKL, 1);
+  Serial.print("Testing ... ");
+  TestILI9341(spiHandle);
+  Serial.println("Complete!");
+
   // Start LVGL
   lv_init();
   // Register print function for debugging
@@ -230,6 +255,7 @@ void setup() {
   // LV_LCD_FLAG_BGR: Sets the color order to Blue-Green-Red instead of Red-Green-Blue (RGB).
   lv_lcd_flag_t flags = LV_LCD_FLAG_NONE;
   disp = lv_ili9341_create(SCREEN_WIDTH, SCREEN_HEIGHT, flags, my_lcd_send_cmd, my_lcd_send_color);
+  // lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_270);
   lv_display_set_buffers(disp, drawBuf, NULL, DRAW_BUF_SIZE, LV_DISPLAY_RENDER_MODE_PARTIAL);
   Serial.println("ILI9341 device created");
 
@@ -238,7 +264,7 @@ void setup() {
   Serial.println("GUI created");
 
   // Finally turn the backlight on
-  gpio_set_level((gpio_num_t) PIN_BACKLIGHT, 1);
+  gpio_set_level((gpio_num_t) PIN_BCKL, 1);
 }
 
 //----------------------------------------------------------------------
@@ -263,6 +289,6 @@ void loop() {
   }
 
   // Check the LVGL task handler
-  // lv_task_handler();
+  lv_task_handler();
   delay(5);
 }
