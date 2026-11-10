@@ -15,4 +15,12 @@ You will need to edit `lv_conf.h` and edit one of the lines:
 #define LV_USE_LOVYAN_GFX 0
 #define LV_USE_TFT_ESPI 0
 ```
-and change the `0` to `1`. This tells LVGL that you want to include the code for that driver.
+and change the `0` to `1`. This tells LVGL that you want to include the code for that driver. If you get an error like:
+```
+Compilation error: 'lv_lovyan_gfx_create' was not declared in this scope
+```
+or:
+```
+Compilation error: 'lv_tft_espi_create' was not declared in this scope
+```
+it means you forgot to change `lv_conf.h` to suit your display.

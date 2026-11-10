@@ -22,6 +22,9 @@
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 320
 
+// Backlight pin
+#define PIN_BCKL 21
+
 // Buffer used by LVGL
 // The usual recommendation is to use 10% of the screen area
 #define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
@@ -90,7 +93,11 @@ void setup() {
   Serial.println("TFT_eSPI initialised");
 #elif defined USE_LOVYANGFX
   disp = lv_lovyan_gfx_create(SCREEN_WIDTH, SCREEN_HEIGHT, drawBuf, sizeof(drawBuf), true);
+  lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
   Serial.println("Loyyan initialised");
+  // For Lovyan we need to manually turn on the backlight
+  pinMode(PIN_BCKL, OUTPUT);
+  digitalWrite(PIN_BCKL, HIGH);
 #endif
   
   // Function to draw the GUI
