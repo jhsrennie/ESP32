@@ -28,10 +28,6 @@ This is a popular and widely used round display.
 
 Possibly the most common display for the 240 x 320 resolution.
 
-### ILI9341 Cheap Yellow Display (CYD)
-
-The CYD is a popular ESP32 board with an ILI9341 built into the board. For some reason the ILI9341 on all my CYD boards has some differences from the standalone ILI9341.
-
 ### ILI9488
 
 A 320 x 480 display.

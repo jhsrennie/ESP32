@@ -14,23 +14,14 @@
 #define SCREEN_WIDTH  240
 #define SCREEN_HEIGHT 320
 
-// CYD pins
-#define PIN_MISO      12
-#define PIN_MOSI      13
-#define PIN_SCLK      14
-#define PIN_DC         2
-#define PIN_CS        15
-#define PIN_RST       -1
-#define PIN_BCKL      21
-
-// Bare ILI9341 pins
-// #define PIN_MISO      15
-// #define PIN_MOSI      16
-// #define PIN_SCLK       4
-// #define PIN_DC        17
-// #define PIN_CS        18
-// #define PIN_RST        5
-// #define PIN_BCKL       2
+// ILI9341 pins
+#define PIN_MISO      15
+#define PIN_MOSI      16
+#define PIN_SCLK       4
+#define PIN_DC        17
+#define PIN_CS        18
+#define PIN_RST        5
+#define PIN_BCKL       2
 
 // ILI9341 commands
 uint8_t CMD_SWRESET = 0x01;
@@ -179,7 +170,9 @@ static void lcd_init(spi_device_handle_t spi) {
   lcd_send_cmd(spi, &CMD_COLMOD, 1, &colmod_data, 1);
 
   // Memory Access Control: no wait needed
-  uint8_t madctl_data = 0x00;
+  // For my ILI9341 I need to set:
+  // bit 6 - mirror x
+  uint8_t madctl_data = 0x40;
   lcd_send_cmd(spi, &CMD_MADCTL, 1, &madctl_data, 1);
 
   // Display on: no wait needed

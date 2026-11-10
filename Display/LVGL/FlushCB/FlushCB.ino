@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-// TFT_eSPI
-// ========
-// This is a basic example of using TFT_eSPI as the display driver for
-// the LVGL library.
+// FlushCB
+// =======
+// This is an basic example of using LVGL by providing a flush_cb()
+// function that LVGL calls to write data to the screen.
 //----------------------------------------------------------------------
 #include <lvgl.h>
 #include "ILI9341.h"
@@ -87,7 +87,6 @@ void setup() {
 
   // Create a display
   lv_display_t* display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
-  // lv_display_set_rotation(display, LV_DISPLAY_ROTATION_0);
   // And set the buffer that the display will use
   lv_display_set_buffers(display, drawBuf, NULL, DRAW_BUF_SIZE, LV_DISPLAY_RENDER_MODE_PARTIAL);
   // And finally set the function that will render the data to the display

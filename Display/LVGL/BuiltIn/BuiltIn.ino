@@ -7,33 +7,11 @@
 #include <lvgl.h>
 #include <driver/spi_master.h>
 
-// The version of the ILI9341 used in my cheap yellow display (CYD)
-// board seems slightly diferent from a normal ILI9341
-#define CYD
-
-// Screen size
-#ifdef CYD
-// When using my CYD board I need to set width 320 x height 240
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
-#else
-// But when using a standalone ILI9341 I need to set width 240 x height 320
 #define SCREEN_WIDTH  240
 #define SCREEN_HEIGHT 320
-#endif
 
 // Define the GPIO pins needed
-#ifdef CYD
-// CYD pins
-#define PIN_MISO      12
-#define PIN_MOSI      13
-#define PIN_SCLK      14
-#define PIN_DC         2
-#define PIN_CS        15
-#define PIN_RST       -1 // The CYD board doesn't have a reset pin
-#define PIN_BCKL      21
-#else
-// Bare ILI9341 pins
+// ILI9341 pins
 #define PIN_MISO      15
 #define PIN_MOSI      16
 #define PIN_SCLK       4
@@ -41,7 +19,6 @@
 #define PIN_CS        18
 #define PIN_RST       -1 // 5 for some reason this stops the display working if I set it
 #define PIN_BCKL       2
-#endif
 
 // Use the HSPI bus for the display
 #define LCD_HOST SPI2_HOST
@@ -273,11 +250,7 @@ void setup() {
   // LV_LCD_FLAG_MIRROR_X: Mirrors the display horizontally (column address order flip).
   // LV_LCD_FLAG_MIRROR_Y: Mirrors the display vertically (page address order flip).
   // LV_LCD_FLAG_BGR: Sets the color order to Blue-Green-Red instead of Red-Green-Blue (RGB).
-  #ifdef CYD
-  lv_lcd_flag_t flags = LV_LCD_FLAG_MIRROR_X;
-  #else
   lv_lcd_flag_t flags = LV_LCD_FLAG_NONE;
-  #endif
 
   // Create a display object
   lv_display_t* disp;

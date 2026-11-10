@@ -8,29 +8,19 @@
 //----------------------------------------------------------------------
 #include "driver/spi_master.h"
 
-// This code was tested with a cheap yellow display (CYD) board.
-// These are the pins the CYD uses for the display.
-#define PIN_MISO   12
-#define PIN_MOSI   13
-#define PIN_SCLK   14
-#define PIN_CS     15
-#define PIN_DC      2
-#define PIN_RST    -1
-#define PIN_BCKL   21
+// ILI9341 pins
+#define PIN_MISO      15
+#define PIN_MOSI      16
+#define PIN_SCLK       4
+#define PIN_DC        17
+#define PIN_CS        18
+#define PIN_RST        5
+#define PIN_BCKL       2
 
-// Bare ILI9341 pins
-// #define PIN_MISO      15
-// #define PIN_MOSI      16
-// #define PIN_SCLK       4
-// #define PIN_DC        17
-// #define PIN_CS        18
-// #define PIN_RST        5
-// #define PIN_BCKL       2
-
-// The CYD uses the HSPI bus for the display
+// Use the HSPI bus for the display
 #define LCD_HOST SPI2_HOST
 
-// Size of the CYD display
+// Size of the display
 #define SCREEN_WIDTH  240
 #define SCREEN_HEIGHT 320
 
@@ -140,7 +130,7 @@ spi_device_handle_t spi_init() {
   // Configure the display device
   spi_device_interface_config_t devcfg;
   memset(&devcfg, 0, sizeof(devcfg));
-  devcfg.clock_speed_hz = 26000000; // SPI Clock speed (26 MHz)
+  devcfg.clock_speed_hz = 26666666; // SPI Clock speed (26 MHz)
   devcfg.mode           = 0;        // SPI mode 0
   devcfg.spics_io_num   = PIN_CS;   // CS GPIO pin
   devcfg.queue_size     = 7;        // Queue transaction limit
@@ -192,7 +182,10 @@ void lcd_init(spi_device_handle_t spi) {
   lcd_send_cmd(spi, &CMD_COLMOD, 1, &colmod_data, 1);
 
   // Memory Access Control: no wait needed
-  uint8_t madctl_data = 0x00;
+  // For my ILI9341 I need to set:
+  // bit 6 - mirror x
+  // bit 3 - RGB order
+  uint8_t madctl_data = 0x48;
   lcd_send_cmd(spi, &CMD_MADCTL, 1, &madctl_data, 1);
 
   // Display on: no wait needed
@@ -221,11 +214,11 @@ void lcd_set_window(spi_device_handle_t spi, uint16_t x1, uint16_t y1, uint16_t 
 }
 
 //----------------------------------------------------------------------
-// lcd_fill
-// --------
+// lcd_fill_screen
+// ---------------
 // Fill the display with the specified colour
 //----------------------------------------------------------------------
-void lcd_fill(spi_device_handle_t spi, uint16_t col) {
+void lcd_fill_screen(spi_device_handle_t spi, uint16_t col) {
   // Set the window to the whole screen
   lcd_set_window(spi, 0, 0, SCREEN_WIDTH-1, SCREEN_HEIGHT-1);
 
@@ -251,6 +244,31 @@ void lcd_fill(spi_device_handle_t spi, uint16_t col) {
 }
 
 //----------------------------------------------------------------------
+// lcd_fill_rect
+// -------------
+// Fill a rectangle with the specified colour
+//----------------------------------------------------------------------
+void lcd_fill_rect(spi_device_handle_t spi, uint16_t col, int left, int top, int right, int bottom) {
+  // Set the window to the rectangle
+  lcd_set_window(spi, left, top, right, bottom);
+
+  // We need to send the data in big endian order
+  uint8_t color_buf[2];
+  color_buf[0] = (col >> 8) & 0xFF;
+  color_buf[1] = col & 0xFF;
+
+  // Fill the draw buffer with the specified colour
+  int num_bytes = 2*(right + 1 - left)*(bottom + 1 - top);
+  for (int i = 0; i < num_bytes; i += 2) {
+      drawBuf[i]   = color_buf[0];
+      drawBuf[i+1] = color_buf[1];
+  }
+
+  // Send the data to the display
+  lcd_send_cmd(spi, &CMD_RAMWR, 1, drawBuf, num_bytes);
+}
+
+//----------------------------------------------------------------------
 // setup
 // -----
 //----------------------------------------------------------------------
@@ -272,15 +290,23 @@ void setup() {
 // ----
 //----------------------------------------------------------------------
 void loop() {
+  // Fill the screen with red, green, blue
   uint16_t red_pixel = 0xF800;
-  lcd_fill(spiHandle, red_pixel);
+  lcd_fill_screen(spiHandle, red_pixel);
   delay(1000);
 
   uint16_t green_pixel = 0x07E0;
-  lcd_fill(spiHandle, green_pixel);
+  lcd_fill_screen(spiHandle, green_pixel);
   delay(1000);
 
   uint16_t blue_pixel = 0x001F;
-  lcd_fill(spiHandle, blue_pixel);
+  lcd_fill_screen(spiHandle, blue_pixel);
+  delay(1000);
+
+  // Draw some lines
+  lcd_fill_screen(spiHandle, 0);
+  lcd_fill_rect(spiHandle, red_pixel,     0,   0, 100,   0);
+  lcd_fill_rect(spiHandle, green_pixel, 100,   0, 100, 100);
+  lcd_fill_rect(spiHandle, blue_pixel,    0, 100, 100, 100);
   delay(5000);
 }

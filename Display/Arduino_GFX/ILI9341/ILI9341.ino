@@ -9,8 +9,8 @@
 #include <Adafruit_ILI9341.h>
 
 // Screen size
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
+#define SCREEN_WIDTH  240
+#define SCREEN_HEIGHT 320
 
 // These are the pins my ILI9341 uses
 #define PIN_MISO      15
@@ -38,7 +38,7 @@ void setup() {
   // Initialise the serial monitor and wait for it to complete
   Serial.begin(115200);
   delay(2000);
-  Serial.println("Starting ILI9341 CYD with the Arduino_GFX library");
+  Serial.println("Starting ILI9341 with the Arduino_GFX library");
 
   //We need to turn on the backlight as it is off by default
   pinMode(PIN_BACKLIGHT, OUTPUT);
